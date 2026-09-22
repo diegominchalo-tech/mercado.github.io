@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OmniPulse | Sales Analytics Dashboard</title>
-
+  <title>OmniPulse Industrial BI | E-Commerce Analytics Suite</title>
+  
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -16,334 +16,619 @@
             brand: {
               50: '#eef2ff',
               100: '#e0e7ff',
+              400: '#818cf8',
               500: '#6366f1',
               600: '#4f46e5',
-              700: '#4338ca'
+              700: '#4338ca',
             }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
           }
         }
       }
     }
   </script>
 
-  <!-- Google Fonts -->
+  <!-- Google Fonts: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <!-- Lucide Icons -->
+  <!-- Lucide Icons CDN -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <!-- Chart.js CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- PapaParse CDN -->
+  <!-- PapaParse for CSV Engine -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
   <style>
     body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-family: 'Inter', sans-serif;
+      transition: background-color 0.25s ease, color 0.25s ease;
     }
-    .font-mono {
-      font-family: 'JetBrains Mono', monospace;
-    }
+    
     .glass-card {
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     }
-    ::-webkit-scrollbar {
-      width: 7px;
-      height: 7px;
+    .glass-card:hover {
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
     }
-    ::-webkit-scrollbar-track {
-      background: transparent;
+    .dark .glass-card:hover {
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
     }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(148, 163, 184, 0.35);
-      border-radius: 9999px;
+
+    /* THEME: HIGH CONTRAST MONOCHROME (B&N) */
+    html.theme-monochrome {
+      filter: grayscale(100%);
     }
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(148, 163, 184, 0.6);
+    html.theme-monochrome body {
+      background-color: #000000 !important;
+      color: #ffffff !important;
     }
-    @keyframes pulseGlow {
-      0%, 100% { box-shadow: 0 0 15px rgba(99, 102, 241, 0.35); }
-      50% { box-shadow: 0 0 25px rgba(99, 102, 241, 0.65); }
+    html.theme-monochrome .glass-card,
+    html.theme-monochrome header,
+    html.theme-monochrome nav,
+    html.theme-monochrome section,
+    html.theme-monochrome table,
+    html.theme-monochrome footer,
+    html.theme-monochrome #modalOverlay > div {
+      background-color: #0b0b0b !important;
+      border-color: #555555 !important;
+      color: #ffffff !important;
     }
-    .pulse-glow {
-      animation: pulseGlow 2.5s infinite ease-in-out;
+    html.theme-monochrome input,
+    html.theme-monochrome select,
+    html.theme-monochrome button {
+      border-color: #777777 !important;
+      background-color: #1a1a1a !important;
+      color: #ffffff !important;
+    }
+
+    /* ACCESSIBLE EASY NAVIGATION MODE */
+    body.easy-mode {
+      font-size: 1.15rem;
+      letter-spacing: 0.02em;
+    }
+    body.easy-mode button, 
+    body.easy-mode select, 
+    body.easy-mode input {
+      padding-top: 0.85rem !important;
+      padding-bottom: 0.85rem !important;
+      font-size: 0.95rem !important;
+      font-weight: 600 !important;
+      min-height: 48px;
+    }
+    body.easy-mode .kpi-number {
+      font-size: 2.4rem !important;
+      line-height: 1.1;
+    }
+    body.easy-mode .glass-card {
+      border-width: 2px !important;
+      margin-bottom: 1.5rem !important;
+    }
+
+    @media print {
+      header, #quickJumpBar, #filterSection, #paginationContainer, #actionsBar, footer, #modalOverlay, #eoqSection {
+        display: none !important;
+      }
+      body {
+        background: white !important;
+        color: black !important;
+      }
+      .glass-card {
+        border: 1px solid #ccc !important;
+        box-shadow: none !important;
+        break-inside: avoid;
+      }
     }
   </style>
 </head>
 
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white transition-colors duration-200">
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
 
-  <!-- Main Navigation Header -->
-  <header class="sticky top-0 z-40 w-full border-b border-slate-800 bg-slate-900/90 backdrop-blur-md px-4 lg:px-8 py-3.5">
-    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+  <!-- Floating Shortcut Helper Bar -->
+  <div class="bg-indigo-600/90 dark:bg-indigo-950/80 text-white text-[11px] py-1 px-4 text-center font-medium flex items-center justify-center gap-4 border-b border-indigo-500/30">
+    <span data-i18n="shortcutSearch">💡 Atajo: Pulsa <kbd class="px-1.5 py-0.5 bg-black/30 rounded font-mono text-[10px]">/</kbd> para buscar</span>
+    <span class="hidden sm:inline">&bull;</span>
+    <span class="hidden sm:inline" data-i18n="shortcutTheme">Pulsa <kbd class="px-1.5 py-0.5 bg-black/30 rounded font-mono text-[10px]">T</kbd> para estilo</span>
+    <span class="hidden sm:inline">&bull;</span>
+    <span class="hidden sm:inline" data-i18n="shortcutEasy">Pulsa <kbd class="px-1.5 py-0.5 bg-black/30 rounded font-mono text-[10px]">N</kbd> para Modo Accesible</span>
+  </div>
+
+  <!-- Main Sticky Top Navbar -->
+  <header class="sticky top-0 z-40 w-full border-b border-slate-200/80 dark:border-slate-800/80 bg-white/85 dark:bg-slate-900/85 backdrop-blur-md px-4 lg:px-8 py-3 transition-colors">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
       
-      <!-- Brand & Status -->
-      <div class="flex items-center justify-between w-full sm:w-auto gap-4">
+      <!-- Brand & File indicator -->
+      <div class="flex items-center justify-between w-full md:w-auto">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
-            <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/30">
+            <i data-lucide="factory" class="w-5 h-5"></i>
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <h1 class="text-lg font-extrabold tracking-tight text-white">OmniPulse</h1>
-              <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">Analytics 5k</span>
+              <span class="font-extrabold text-lg tracking-tight text-slate-900 dark:text-white">OmniPulse</span>
+              <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20" data-i18n="badgeTitle">Industrial BI &amp; Operations</span>
             </div>
-            <p class="text-xs text-slate-400 flex items-center gap-1.5" id="datasetStatus">
-              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              Fuente: <span class="font-semibold text-slate-200" id="activeFileName">ecommerce_sales_analytics_5000.csv</span>
+            <p class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5" id="datasetInfo">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+              <span id="activeFileName">ecommerce_sales_analytics_5000.csv</span>
             </p>
           </div>
         </div>
 
-        <!-- Mobile Quick Actions -->
-        <div class="flex sm:hidden items-center gap-2">
-          <button id="themeToggleBtnMobile" class="p-2 rounded-lg border border-slate-800 text-slate-300 hover:bg-slate-800 transition">
-            <i data-lucide="sun" class="w-4 h-4"></i>
-          </button>
-        </div>
+        <!-- Easy Mode Mobile Pill -->
+        <button id="easyModeBtnMobile" class="md:hidden flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50/70 dark:bg-indigo-950/70 text-xs font-semibold text-indigo-600 dark:text-indigo-300">
+          <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+          <span data-i18n="easyMobile">Fácil</span>
+        </button>
       </div>
 
-      <!-- Action Buttons -->
-      <div class="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-end">
-        <!-- Hidden input for file selection -->
-        <input type="file" id="csvFileInput" accept=".csv" class="hidden">
+      <!-- Controls: Language, Easy Mode, Themes, Upload, Print -->
+      <div class="flex flex-wrap items-center justify-end gap-2 w-full md:w-auto" id="actionsBar">
         
-        <!-- Prominent CSV Upload Button -->
-        <button id="uploadCsvBtn" class="flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg shadow-indigo-600/30 transition transform hover:-translate-y-0.5 active:translate-y-0 pulse-glow">
-          <i data-lucide="upload-cloud" class="w-4 h-4"></i>
-          <span>Cargar CSV</span>
+        <!-- Language Switcher (ES / EN) -->
+        <div class="flex items-center rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/80 dark:bg-slate-800/80 p-1">
+          <button id="langEsBtn" title="Cambiar a Español" class="lang-btn px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm">
+            <span>🇪🇸 ES</span>
+          </button>
+          <button id="langEnBtn" title="Switch to English" class="lang-btn px-2.5 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1 text-slate-600 dark:text-slate-300">
+            <span>🇺🇸 EN</span>
+          </button>
+        </div>
+
+        <!-- Accessible Mode Switcher -->
+        <button id="easyModeToggleBtn" title="Activa texto ampliado y botones grandes" class="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl border border-indigo-200 dark:border-indigo-900 bg-indigo-50/80 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 transition shadow-sm">
+          <i data-lucide="eye" class="w-3.5 h-3.5 text-indigo-600"></i>
+          <span id="easyModeLabel" data-i18n="easyNavDisabled">Navegación Fácil: Desactivada</span>
         </button>
 
-        <!-- Export CSV Button -->
-        <button id="exportFilteredBtn" class="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl border border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-200 transition">
-          <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-400"></i>
-          <span>Exportar</span>
+        <!-- Theme Selector (Dark, Light, B&N) -->
+        <div class="flex items-center rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/80 dark:bg-slate-800/80 p-1">
+          <button id="themeDarkBtn" title="Modo Oscuro" class="theme-btn px-2 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1 bg-white dark:bg-slate-900 shadow-sm text-indigo-600 dark:text-indigo-400 font-bold">
+            <i data-lucide="moon" class="w-3.5 h-3.5"></i>
+            <span class="hidden sm:inline" data-i18n="themeDark">Oscuro</span>
+          </button>
+          <button id="themeLightBtn" title="Modo Claro" class="theme-btn px-2 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1 text-slate-600 dark:text-slate-300">
+            <i data-lucide="sun" class="w-3.5 h-3.5"></i>
+            <span class="hidden sm:inline" data-i18n="themeLight">Claro</span>
+          </button>
+          <button id="themeMonoBtn" title="Modo B&N / Alto Contraste" class="theme-btn px-2 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1 text-slate-600 dark:text-slate-300">
+            <i data-lucide="contrast" class="w-3.5 h-3.5"></i>
+            <span class="hidden sm:inline" data-i18n="themeMono">B&amp;N</span>
+          </button>
+        </div>
+
+        <!-- Upload CSV & Print PDF -->
+        <input type="file" id="csvFileInput" accept=".csv" class="hidden">
+        <button id="uploadCsvBtn" class="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition shadow-sm">
+          <i data-lucide="upload" class="w-3.5 h-3.5 text-indigo-500"></i>
+          <span data-i18n="btnUpload">Subir CSV</span>
         </button>
 
-        <!-- Reset Button -->
-        <button id="resetFiltersBtn" class="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
-          <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
-          <span>Limpiar</span>
-        </button>
-
-        <!-- Desktop Theme Toggle -->
-        <button id="themeToggleBtnDesktop" class="hidden sm:flex items-center justify-center p-2 rounded-xl border border-slate-800 bg-slate-900 text-slate-300 hover:bg-slate-800 transition" title="Alternar tema">
-          <i data-lucide="sun" class="w-4 h-4"></i>
+        <button id="printReportBtn" class="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition shadow-sm">
+          <i data-lucide="printer" class="w-3.5 h-3.5 text-slate-500"></i>
+          <span data-i18n="btnPrint">Imprimir / PDF</span>
         </button>
       </div>
 
     </div>
   </header>
 
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 space-y-6">
-
-    <!-- Manual CSV Notice / Drag & Drop area -->
-    <div id="dropZoneContainer" class="relative group p-4 sm:p-5 rounded-2xl border-2 border-dashed border-indigo-500/40 hover:border-indigo-500 bg-indigo-950/20 hover:bg-indigo-950/40 transition-all cursor-pointer text-center">
-      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 text-left">
-        <div class="flex items-center gap-3.5">
-          <div class="p-3 rounded-xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
-            <i data-lucide="file-spreadsheet" class="w-6 h-6"></i>
-          </div>
-          <div>
-            <h2 class="text-sm font-bold text-white">¿Tienes tu archivo <span class="text-indigo-400">ecommerce_sales_analytics_5000.csv</span>?</h2>
-            <p class="text-xs text-slate-400">Haz clic aquí o arrástralo sobre esta ventana para cargar todos tus datos en vivo en segundos.</p>
-          </div>
-        </div>
-        <button id="selectFileBannerBtn" class="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shrink-0 shadow transition">
-          Seleccionar archivo CSV
-        </button>
+  <!-- Quick Anchor Navigation Bar -->
+  <nav id="quickJumpBar" class="bg-slate-100/70 dark:bg-slate-900/60 border-b border-slate-200/60 dark:border-slate-800/60 px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300">
+    <div class="max-w-7xl mx-auto flex items-center justify-between overflow-x-auto gap-3 whitespace-nowrap">
+      <div class="flex items-center gap-2 text-[11px] text-slate-400 uppercase tracking-wider font-semibold">
+        <i data-lucide="compass" class="w-3.5 h-3.5"></i>
+        <span data-i18n="jumpTo">Ir rápido a:</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <a href="#section-ie-suite" class="px-2.5 py-1 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:text-indigo-600 dark:hover:text-indigo-400 transition flex items-center gap-1">
+          <i data-lucide="cog" class="w-3 h-3 text-indigo-500"></i> <span data-i18n="navParetoSpc">Pareto &amp; CEP (SPC)</span>
+        </a>
+        <a href="#section-eoq" class="px-2.5 py-1 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:text-indigo-600 dark:hover:text-indigo-400 transition flex items-center gap-1">
+          <i data-lucide="calculator" class="w-3 h-3 text-teal-500"></i> <span data-i18n="navEoq">Calculadora EOQ &amp; ROP</span>
+        </a>
+        <a href="#section-kpis" class="px-2.5 py-1 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:text-indigo-600 dark:hover:text-indigo-400 transition flex items-center gap-1">
+          <i data-lucide="gauge" class="w-3 h-3 text-emerald-500"></i> <span data-i18n="navKpis">Indicadores KPIs</span>
+        </a>
+        <a href="#section-charts" class="px-2.5 py-1 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:text-indigo-600 dark:hover:text-indigo-400 transition flex items-center gap-1">
+          <i data-lucide="bar-chart-3" class="w-3 h-3 text-purple-500"></i> <span data-i18n="navCharts">Gráficos de Ventas</span>
+        </a>
+        <a href="#section-table" class="px-2.5 py-1 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:text-indigo-600 dark:hover:text-indigo-400 transition flex items-center gap-1">
+          <i data-lucide="table" class="w-3 h-3 text-blue-500"></i> <span data-i18n="navTable">Tabla de Datos</span>
+        </a>
       </div>
     </div>
+  </nav>
 
-    <!-- Notification / Toast Feedback -->
-    <div id="statusToast" class="hidden transition-all duration-300 flex items-center justify-between p-3.5 rounded-xl border bg-emerald-950/50 text-emerald-300 border-emerald-800/80 shadow text-xs">
+  <!-- Notification Toast -->
+  <div id="statusToast" class="hidden max-w-7xl mx-auto px-4 mt-3 w-full">
+    <div class="flex items-center justify-between p-3.5 rounded-2xl border bg-emerald-50 text-emerald-900 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-200 dark:border-emerald-800 shadow-sm text-xs font-medium">
       <div class="flex items-center gap-2">
-        <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
-        <span id="toastMessage">Datos cargados satisfactoriamente.</span>
+        <i data-lucide="check-circle" class="w-4 h-4 text-emerald-500"></i>
+        <span id="toastMessage">Operación realizada con éxito.</span>
       </div>
-      <button onclick="document.getElementById('statusToast').classList.add('hidden')" class="p-1 hover:bg-emerald-900/60 rounded">
+      <button onclick="document.getElementById('statusToast').classList.add('hidden')" class="p-1 rounded-md hover:bg-emerald-200/50 dark:hover:bg-emerald-900">
         <i data-lucide="x" class="w-3.5 h-3.5"></i>
       </button>
     </div>
+  </div>
 
-    <!-- Filter Control Panel -->
-    <section class="p-4 sm:p-5 rounded-2xl border border-slate-800/90 bg-slate-900/70 glass-card shadow-sm space-y-4">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        
-        <!-- Search Field -->
-        <div>
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Búsqueda rápida</label>
-          <div class="relative">
-            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"></i>
-            <input type="text" id="searchInput" placeholder="Producto, categoría, ID..." class="w-full pl-9 pr-3 py-2 rounded-xl text-xs bg-slate-950/80 border border-slate-800 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
-          </div>
-        </div>
+  <!-- MAIN APP CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 space-y-8">
 
-        <!-- Date Range -->
-        <div>
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Rango de Fechas</label>
-          <div class="grid grid-cols-2 gap-1.5">
-            <input type="date" id="startDateInput" class="w-full px-2 py-1.5 rounded-xl text-xs bg-slate-950/80 border border-slate-800 text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            <input type="date" id="endDateInput" class="w-full px-2 py-1.5 rounded-xl text-xs bg-slate-950/80 border border-slate-800 text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          </div>
-        </div>
-
-        <!-- Category Dropdown -->
-        <div>
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Categoría</label>
-          <select id="categorySelect" class="w-full px-3 py-2 rounded-xl text-xs bg-slate-950/80 border border-slate-800 text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            <option value="ALL">Todas las Categorías</option>
-          </select>
-        </div>
-
-        <!-- Payment Method Dropdown -->
-        <div>
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Método de Pago</label>
-          <select id="paymentSelect" class="w-full px-3 py-2 rounded-xl text-xs bg-slate-950/80 border border-slate-800 text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            <option value="ALL">Todos los Métodos</option>
-          </select>
-        </div>
-
+    <!-- SECTION: FILTERS AND LIVE SEARCH -->
+    <section id="filterSection" class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/70 glass-card space-y-4">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <i data-lucide="sliders" class="w-4 h-4 text-indigo-500"></i>
+          <span data-i18n="filterTitle">Filtros y Búsqueda Interactiva</span>
+        </h3>
+        <button id="resetFiltersBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 transition">
+          <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+          <span data-i18n="btnReset">Limpiar Filtros (Esc)</span>
+        </button>
       </div>
 
-      <!-- Region Filter Pills -->
-      <div class="pt-3 border-t border-slate-800 flex flex-wrap items-center gap-2">
-        <span class="text-xs font-semibold text-slate-400 mr-1 flex items-center gap-1">
-          <i data-lucide="map-pin" class="w-3.5 h-3.5 text-indigo-400"></i> Región:
-        </span>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5" data-i18n="labelSearch">Búsqueda Rápida</label>
+          <div class="relative">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input type="text" id="searchInput" placeholder="Buscar producto, cliente... (/)" class="w-full pl-9 pr-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5" data-i18n="labelDate">Rango de Fecha</label>
+          <div class="grid grid-cols-2 gap-1.5">
+            <input type="date" id="startDateInput" class="w-full px-2 py-1.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <input type="date" id="endDateInput" class="w-full px-2 py-1.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5" data-i18n="labelCategory">Categoría</label>
+          <select id="categorySelect" class="w-full px-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="ALL" data-i18n="optAllCategories">Todas las Categorías</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5" data-i18n="labelPayment">Método de Pago</label>
+          <select id="paymentSelect" class="w-full px-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="ALL" data-i18n="optAllPayments">Todos los Métodos</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Region Pills -->
+      <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-2">
+        <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-1" data-i18n="labelRegion">Filtrar por Región:</span>
         <div id="regionPillsContainer" class="flex flex-wrap gap-1.5">
-          <button class="region-pill px-3 py-1 text-xs rounded-full font-medium transition border bg-indigo-600 text-white border-indigo-600" data-region="ALL">Todas</button>
-          <button class="region-pill px-3 py-1 text-xs rounded-full font-medium transition border bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700" data-region="North">North</button>
-          <button class="region-pill px-3 py-1 text-xs rounded-full font-medium transition border bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700" data-region="South">South</button>
-          <button class="region-pill px-3 py-1 text-xs rounded-full font-medium transition border bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700" data-region="East">East</button>
-          <button class="region-pill px-3 py-1 text-xs rounded-full font-medium transition border bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700" data-region="West">West</button>
+          <!-- Injected dynamically -->
         </div>
       </div>
     </section>
 
-    <!-- KPI Metrics Cards Grid -->
-    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+    <!-- SECTION: INDUSTRIAL ENGINEERING & OPERATIONS ANALYTICS SUITE -->
+    <section id="section-ie-suite" class="space-y-4">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+            <i data-lucide="shield-check" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h2 class="text-base font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+              <span data-i18n="ieSuiteTitle">Suite de Ingeniería Industrial &amp; Calidad Operativa</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-bold">Six Sigma Ready</span>
+            </h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400" data-i18n="ieSuiteSubtitle">Diagrama de Pareto 80/20, Gráficos de Control Estadístico de Procesos (CEP/SPC) y Capacidad de Proceso</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Operations Quality KPIs (Lean & Six Sigma Metrics) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Lean KPI 1: OTIF Delivery -->
+        <div class="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 glass-card">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400" data-i18n="kpiOtifTitle">Nivel de Servicio OTIF</span>
+            <span class="p-2 rounded-xl bg-emerald-500/10 text-emerald-500">
+              <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+            </span>
+          </div>
+          <div class="mt-3">
+            <h3 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white kpi-number" id="kpiOtif">0.0%</h3>
+            <p class="text-xs text-emerald-500 font-medium mt-1" data-i18n="kpiOtifSubtitle">Despachos &le; 5 días objetivo</p>
+          </div>
+        </div>
+
+        <!-- Lean KPI 2: Mean Lead Time -->
+        <div class="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 glass-card">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400" data-i18n="kpiMeanLeadTitle">Lead Time Logístico (X̄)</span>
+            <span class="p-2 rounded-xl bg-blue-500/10 text-blue-500">
+              <i data-lucide="timer" class="w-4 h-4"></i>
+            </span>
+          </div>
+          <div class="mt-3">
+            <h3 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white kpi-number" id="kpiMeanLead">0.00 días</h3>
+            <p class="text-xs text-blue-500 font-medium mt-1" id="kpiStdDev">Desv. Estándar σ: 0.00</p>
+          </div>
+        </div>
+
+        <!-- Lean KPI 3: Process Capability Cp -->
+        <div class="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 glass-card">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400" data-i18n="kpiCpTitle">Índice Capacidad Cp</span>
+            <span class="p-2 rounded-xl bg-purple-500/10 text-purple-500">
+              <i data-lucide="git-commit" class="w-4 h-4"></i>
+            </span>
+          </div>
+          <div class="mt-3">
+            <h3 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white kpi-number" id="kpiCpVal">0.00</h3>
+            <p class="text-xs text-purple-500 font-medium mt-1" id="kpiCpBadge">Proceso Capaz</p>
+          </div>
+        </div>
+
+        <!-- Lean KPI 4: Process Capability Cpk -->
+        <div class="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 glass-card">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400" data-i18n="kpiCpkTitle">Índice Centrado Cpk</span>
+            <span class="p-2 rounded-xl bg-amber-500/10 text-amber-500">
+              <i data-lucide="target" class="w-4 h-4"></i>
+            </span>
+          </div>
+          <div class="mt-3">
+            <h3 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white kpi-number" id="kpiCpkVal">0.00</h3>
+            <p class="text-xs text-amber-500 font-medium mt-1" id="kpiCpkBadge">Descentrado Moderado</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Industrial Engineering Charts: Pareto & SPC -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- CHART: PARETO 80/20 -->
+        <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 glass-card">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <span data-i18n="paretoTitle">Diagrama de Pareto 80/20 (Ingresos)</span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300" data-i18n="paretoTag">Pocos Vitales</span>
+              </h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400" data-i18n="paretoSubtitle">Barras de facturación ordenada + Línea de porcentaje acumulado con corte en 80%</p>
+            </div>
+            <div class="p-2 rounded-xl bg-indigo-500/10 text-indigo-500">
+              <i data-lucide="award" class="w-4 h-4"></i>
+            </div>
+          </div>
+          <div class="h-72 w-full">
+            <canvas id="paretoChart"></canvas>
+          </div>
+        </div>
+
+        <!-- CHART: STATISTICAL PROCESS CONTROL (SPC / CEP) -->
+        <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 glass-card">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <span data-i18n="spcTitle">Carta de Control CEP / SPC (Días de Entrega)</span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300" id="spcOutlierCount">0 anómalos</span>
+              </h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400" data-i18n="spcSubtitle">Límites Estadísticos: Media (X̄), Límite Superior (UCL = X̄ + 3σ) e Inferior (LCL)</p>
+            </div>
+            <div class="p-2 rounded-xl bg-rose-500/10 text-rose-500">
+              <i data-lucide="activity" class="w-4 h-4"></i>
+            </div>
+          </div>
+          <div class="h-72 w-full">
+            <canvas id="spcChart"></canvas>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION: INTERACTIVE INVENTORY MANAGEMENT SIMULATOR (EOQ & ROP) -->
+    <section id="section-eoq" class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/70 glass-card space-y-4">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+        <div class="flex items-center gap-2">
+          <div class="p-2 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
+            <i data-lucide="calculator" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white" data-i18n="eoqTitle">Simulador de Inventarios: Lote Óptimo EOQ &amp; Punto de Reorden (ROP)</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400" data-i18n="eoqSubtitle">Calcula la cantidad económica de pedido y el momento de compra según la demanda actual del dataset</p>
+          </div>
+        </div>
+        <span class="text-xs font-bold px-2.5 py-1 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800" data-i18n="eoqBadge">Fórmula Wilson EOQ</span>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Input controls -->
+        <div class="space-y-3 bg-slate-50/80 dark:bg-slate-950/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1" data-i18n="eoqCostOrder">Costo por Realizar Pedido (S) [$]</label>
+            <input type="number" id="eoqCostOrderInput" value="35" min="1" max="1000" class="w-full px-3 py-1.5 rounded-lg text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-teal-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1" data-i18n="eoqCostHold">Costo Anual de Almacenamiento (H) [$ / unid]</label>
+            <input type="number" id="eoqCostHoldInput" value="4.5" step="0.1" min="0.1" max="500" class="w-full px-3 py-1.5 rounded-lg text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-teal-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1" data-i18n="eoqServiceLevel">Nivel de Confianza Logística (Z)</label>
+            <select id="eoqZSelect" class="w-full px-3 py-1.5 rounded-lg text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-teal-500">
+              <option value="1.645">90% Confianza (Z = 1.65)</option>
+              <option value="1.96" selected>95% Confianza (Z = 1.96)</option>
+              <option value="2.326">98% Confianza (Z = 2.33)</option>
+              <option value="2.576">99% Confianza (Z = 2.58)</option>
+            </select>
+          </div>
+          <button id="recalcEoqBtn" class="w-full py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs transition shadow-sm" data-i18n="btnRecalcEoq">
+            Recalcular Modelo de Inventario
+          </button>
+        </div>
+
+        <!-- Calculated Results Cards -->
+        <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <!-- Optimal Batch Q* -->
+          <div class="p-4 rounded-xl border border-teal-200 dark:border-teal-900 bg-teal-50/40 dark:bg-teal-950/20 flex flex-col justify-between">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-teal-600 dark:text-teal-400" data-i18n="eoqQTitle">Lote Económico (Q*)</span>
+              <h4 class="text-2xl font-black text-slate-900 dark:text-white mt-2" id="eoqResultQ">0 unid</h4>
+            </div>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-2" data-i18n="eoqQDesc">Tamaño de lote óptimo que minimiza el costo total.</p>
+          </div>
+
+          <!-- Reorder Point ROP -->
+          <div class="p-4 rounded-xl border border-indigo-200 dark:border-indigo-900 bg-indigo-50/40 dark:bg-indigo-950/20 flex flex-col justify-between">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400" data-i18n="eoqRopTitle">Punto de Reorden (ROP)</span>
+              <h4 class="text-2xl font-black text-slate-900 dark:text-white mt-2" id="eoqResultRop">0 unid</h4>
+            </div>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-2" id="eoqSafetyStockDesc">Incluye stock de seguridad: 0 unid</p>
+          </div>
+
+          <!-- Annual Orders & Total Cost -->
+          <div class="p-4 rounded-xl border border-purple-200 dark:border-purple-900 bg-purple-50/40 dark:bg-purple-950/20 flex flex-col justify-between">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400" data-i18n="eoqCostTitle">Costo Total Inventario</span>
+              <h4 class="text-2xl font-black text-slate-900 dark:text-white mt-2" id="eoqResultCost">$0</h4>
+            </div>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-2" id="eoqOrdersYearDesc">0 pedidos proyectados / año</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: COMMERCIAL & BUSINESS KPIS -->
+    <section id="section-kpis" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
       
-      <!-- KPI: Total Revenue -->
-      <div class="p-4 rounded-2xl border border-slate-800/90 bg-slate-900/70 glass-card hover:border-indigo-500/50 transition">
+      <!-- KPI 1: Revenue -->
+      <div class="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 glass-card">
         <div class="flex items-center justify-between">
-          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Ingresos Totales</span>
-          <span class="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400" data-i18n="kpiRevTitle">Ingresos Totales</span>
+          <span class="p-2 rounded-xl bg-indigo-500/10 text-indigo-500">
             <i data-lucide="dollar-sign" class="w-4 h-4"></i>
           </span>
         </div>
-        <div class="mt-2.5">
-          <h3 class="text-2xl font-extrabold text-white" id="kpiRevenue">$0</h3>
-          <div class="flex items-center gap-1.5 mt-1 text-xs text-emerald-400 font-medium">
+        <div class="mt-3">
+          <h3 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white kpi-number" id="kpiRevenue">$0</h3>
+          <p class="text-xs text-emerald-500 font-medium mt-1 flex items-center gap-1">
             <i data-lucide="trending-up" class="w-3.5 h-3.5"></i>
             <span id="kpiAvgTicket">Ticket: $0</span>
-          </div>
+          </p>
         </div>
       </div>
 
-      <!-- KPI: Total Orders -->
-      <div class="p-4 rounded-2xl border border-slate-800/90 bg-slate-900/70 glass-card hover:border-purple-500/50 transition">
+      <!-- KPI 2: Total Orders -->
+      <div class="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 glass-card">
         <div class="flex items-center justify-between">
-          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Órdenes Realizadas</span>
-          <span class="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400" data-i18n="kpiOrdersTitle">Pedidos Procesados</span>
+          <span class="p-2 rounded-xl bg-purple-500/10 text-purple-500">
             <i data-lucide="shopping-bag" class="w-4 h-4"></i>
           </span>
         </div>
-        <div class="mt-2.5">
-          <h3 class="text-2xl font-extrabold text-white" id="kpiOrders">0</h3>
-          <div class="flex items-center gap-1.5 mt-1 text-xs text-purple-400 font-medium">
-            <i data-lucide="check" class="w-3.5 h-3.5"></i>
-            <span id="kpiActivePercent">100% procesadas</span>
-          </div>
+        <div class="mt-3">
+          <h3 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white kpi-number" id="kpiOrders">0</h3>
+          <p class="text-xs text-purple-500 font-medium mt-1 flex items-center gap-1">
+            <i data-lucide="layers" class="w-3.5 h-3.5"></i>
+            <span id="kpiFilteredShare">100% del total</span>
+          </p>
         </div>
       </div>
 
-      <!-- KPI: Units Sold -->
-      <div class="p-4 rounded-2xl border border-slate-800/90 bg-slate-900/70 glass-card hover:border-teal-500/50 transition">
+      <!-- KPI 3: Units Sold -->
+      <div class="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 glass-card">
         <div class="flex items-center justify-between">
-          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Unidades Vendidas</span>
-          <span class="p-2 rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/20">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400" data-i18n="kpiUnitsTitle">Unidades Vendidas</span>
+          <span class="p-2 rounded-xl bg-teal-500/10 text-teal-500">
             <i data-lucide="boxes" class="w-4 h-4"></i>
           </span>
         </div>
-        <div class="mt-2.5">
-          <h3 class="text-2xl font-extrabold text-white" id="kpiUnits">0</h3>
-          <div class="flex items-center gap-1.5 mt-1 text-xs text-teal-400 font-medium">
-            <i data-lucide="layers" class="w-3.5 h-3.5"></i>
-            <span id="kpiUnitsPerOrder">0 unid / orden</span>
-          </div>
+        <div class="mt-3">
+          <h3 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white kpi-number" id="kpiUnits">0</h3>
+          <p class="text-xs text-teal-500 font-medium mt-1 flex items-center gap-1">
+            <i data-lucide="package" class="w-3.5 h-3.5"></i>
+            <span id="kpiUnitsRatio">0 unid / orden</span>
+          </p>
         </div>
       </div>
 
-      <!-- KPI: Average Rating -->
-      <div class="p-4 rounded-2xl border border-slate-800/90 bg-slate-900/70 glass-card hover:border-amber-500/50 transition">
+      <!-- KPI 4: Customer Satisfaction -->
+      <div class="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 glass-card">
         <div class="flex items-center justify-between">
-          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Rating Promedio</span>
-          <span class="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
-            <i data-lucide="star" class="w-4 h-4 fill-amber-400"></i>
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400" data-i18n="kpiRatingTitle">Satisfacción Cliente</span>
+          <span class="p-2 rounded-xl bg-amber-500/10 text-amber-500">
+            <i data-lucide="star" class="w-4 h-4 fill-amber-400 text-amber-400"></i>
           </span>
         </div>
-        <div class="mt-2.5">
-          <h3 class="text-2xl font-extrabold text-white" id="kpiRating">0.0 ★</h3>
-          <div class="flex items-center gap-1.5 mt-1 text-xs text-amber-400 font-medium">
+        <div class="mt-3">
+          <h3 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white kpi-number" id="kpiRating">0.0 ★</h3>
+          <p class="text-xs text-amber-500 font-medium mt-1 flex items-center gap-1">
             <i data-lucide="smile" class="w-3.5 h-3.5"></i>
-            <span>Satisfacción cliente</span>
-          </div>
+            <span data-i18n="kpiRatingSub">Evaluación promedio</span>
+          </p>
         </div>
       </div>
 
-      <!-- KPI: Delivery Time -->
-      <div class="p-4 rounded-2xl border border-slate-800/90 bg-slate-900/70 glass-card hover:border-rose-500/50 transition">
+      <!-- KPI 5: Delivery Velocity -->
+      <div class="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 glass-card">
         <div class="flex items-center justify-between">
-          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Tiempo de Entrega</span>
-          <span class="p-2 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400" data-i18n="kpiDeliveryTitle">Rapidez Logística</span>
+          <span class="p-2 rounded-xl bg-rose-500/10 text-rose-500">
             <i data-lucide="truck" class="w-4 h-4"></i>
           </span>
         </div>
-        <div class="mt-2.5">
-          <h3 class="text-2xl font-extrabold text-white" id="kpiDelivery">0 días</h3>
-          <div class="flex items-center gap-1.5 mt-1 text-xs text-rose-400 font-medium">
+        <div class="mt-3">
+          <h3 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white kpi-number" id="kpiDelivery">0 días</h3>
+          <p class="text-xs text-rose-500 font-medium mt-1 flex items-center gap-1">
             <i data-lucide="clock" class="w-3.5 h-3.5"></i>
-            <span>Logística promedio</span>
-          </div>
+            <span data-i18n="kpiDeliverySub">Tiempo promedio</span>
+          </p>
         </div>
       </div>
 
     </section>
 
-    <!-- Interactive Charts Grid -->
-    <section class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+    <!-- SECTION: COMMERCIAL & SALES CHARTS GRID -->
+    <section id="section-charts" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       
-      <!-- Chart 1: Revenue Timeline (Spans 2 cols) -->
-      <div class="lg:col-span-2 p-5 rounded-2xl border border-slate-800/90 bg-slate-900/70 glass-card shadow-sm">
-        <div class="flex items-center justify-between mb-4">
+      <!-- Chart 1: Revenue Timeline -->
+      <div class="lg:col-span-2 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 glass-card">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-4">
           <div>
-            <h3 class="text-sm font-bold text-white">Evolución de Ingresos en el Tiempo</h3>
-            <p class="text-xs text-slate-400">Ventas mensuales consolidadas</p>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white" data-i18n="chartTimelineTitle">Evolución de Ventas en el Tiempo</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400" data-i18n="chartTimelineSub">Facturación acumulada mensual</p>
           </div>
-          <span class="p-2 rounded-lg bg-indigo-500/10 text-indigo-400">
-            <i data-lucide="trending-up" class="w-4 h-4"></i>
-          </span>
+          <div class="flex items-center rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 p-1 text-xs">
+            <button id="toggleLineChartBtn" class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 shadow-sm font-semibold text-indigo-600 dark:text-indigo-400" data-i18n="btnLine">Línea</button>
+            <button id="toggleBarChartBtn" class="px-2.5 py-1 rounded-lg text-slate-600 dark:text-slate-400 font-medium hover:text-slate-900" data-i18n="btnBar">Barras</button>
+          </div>
         </div>
         <div class="h-64 sm:h-72 w-full">
           <canvas id="timelineChart"></canvas>
         </div>
       </div>
 
-      <!-- Chart 2: Category Breakdown -->
-      <div class="p-5 rounded-2xl border border-slate-800/90 bg-slate-900/70 glass-card shadow-sm">
+      <!-- Chart 2: Category Breakdown Donut -->
+      <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 glass-card">
         <div class="flex items-center justify-between mb-4">
           <div>
-            <h3 class="text-sm font-bold text-white">Ventas por Categoría</h3>
-            <p class="text-xs text-slate-400">Participación por volumen total</p>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white" data-i18n="chartCatTitle">Participación por Categoría</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400" data-i18n="chartCatSub">Distribución del valor facturado</p>
           </div>
-          <span class="p-2 rounded-lg bg-purple-500/10 text-purple-400">
+          <div class="p-2 rounded-xl bg-purple-500/10 text-purple-500">
             <i data-lucide="pie-chart" class="w-4 h-4"></i>
-          </span>
+          </div>
         </div>
         <div class="h-64 sm:h-72 w-full flex items-center justify-center">
           <canvas id="categoryChart"></canvas>
@@ -351,47 +636,47 @@
       </div>
 
       <!-- Chart 3: Regional Sales -->
-      <div class="p-5 rounded-2xl border border-slate-800/90 bg-slate-900/70 glass-card shadow-sm">
+      <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 glass-card">
         <div class="flex items-center justify-between mb-4">
           <div>
-            <h3 class="text-sm font-bold text-white">Ventas por Región</h3>
-            <p class="text-xs text-slate-400">Rendimiento por zona geográfica</p>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white" data-i18n="chartRegTitle">Ingresos por Región Geográfica</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400" data-i18n="chartRegSub">Comparativa territorial</p>
           </div>
-          <span class="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
+          <div class="p-2 rounded-xl bg-emerald-500/10 text-emerald-500">
             <i data-lucide="map-pin" class="w-4 h-4"></i>
-          </span>
+          </div>
         </div>
         <div class="h-64 sm:h-72 w-full">
           <canvas id="regionChart"></canvas>
         </div>
       </div>
 
-      <!-- Chart 4: Payment Distribution -->
-      <div class="p-5 rounded-2xl border border-slate-800/90 bg-slate-900/70 glass-card shadow-sm">
+      <!-- Chart 4: Payment Methods Distribution -->
+      <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 glass-card">
         <div class="flex items-center justify-between mb-4">
           <div>
-            <h3 class="text-sm font-bold text-white">Métodos de Pago</h3>
-            <p class="text-xs text-slate-400">Transacciones por medio</p>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white" data-i18n="chartPayTitle">Métodos de Pago</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400" data-i18n="chartPaySub">Canales transaccionales preferidos</p>
           </div>
-          <span class="p-2 rounded-lg bg-amber-500/10 text-amber-400">
+          <div class="p-2 rounded-xl bg-amber-500/10 text-amber-500">
             <i data-lucide="credit-card" class="w-4 h-4"></i>
-          </span>
+          </div>
         </div>
         <div class="h-64 sm:h-72 w-full flex items-center justify-center">
           <canvas id="paymentChart"></canvas>
         </div>
       </div>
 
-      <!-- Chart 5: Delivery Days vs Satisfaction -->
-      <div class="p-5 rounded-2xl border border-slate-800/90 bg-slate-900/70 glass-card shadow-sm">
+      <!-- Chart 5: Delivery Velocity vs Rating Correlation -->
+      <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 glass-card">
         <div class="flex items-center justify-between mb-4">
           <div>
-            <h3 class="text-sm font-bold text-white">Días de Entrega vs Rating</h3>
-            <p class="text-xs text-slate-400">Satisfacción según rapidez</p>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white" data-i18n="chartDelivRatingTitle">Logística vs Satisfacción</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400" data-i18n="chartDelivRatingSub">Calificación de clientes según días de entrega</p>
           </div>
-          <span class="p-2 rounded-lg bg-rose-500/10 text-rose-400">
+          <div class="p-2 rounded-xl bg-rose-500/10 text-rose-500">
             <i data-lucide="activity" class="w-4 h-4"></i>
-          </span>
+          </div>
         </div>
         <div class="h-64 sm:h-72 w-full">
           <canvas id="deliveryRatingChart"></canvas>
@@ -400,62 +685,68 @@
 
     </section>
 
-    <!-- Interactive Data Table -->
-    <section class="p-5 rounded-2xl border border-slate-800/90 bg-slate-900/70 glass-card shadow-sm space-y-4">
+    <!-- SECTION: DATA TABLE -->
+    <section id="section-table" class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 glass-card space-y-4">
       <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <div class="flex items-center gap-2">
-            <h3 class="text-sm font-bold text-white">Registros de Transacciones</h3>
-            <span id="recordsBadge" class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300">0 registros</span>
-          </div>
-          <p class="text-xs text-slate-400">Haz clic en cualquier columna para ordenar de forma ascendente o descendente</p>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span data-i18n="tableTitle">Listado de Transacciones</span>
+            <span id="recordsBadge" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">0 registros</span>
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400" data-i18n="tableSubtitle">Haz clic en cualquier fila para ver el comprobante detallado del pedido</p>
         </div>
-        <div class="flex items-center gap-2 text-xs">
-          <span class="text-slate-400 font-medium">Mostrar:</span>
-          <select id="pageSizeSelect" class="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-200 focus:outline-none">
-            <option value="10">10</option>
-            <option value="25" selected>25</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
+
+        <div class="flex items-center gap-2">
+          <button id="exportCsvBtn" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition shadow-sm">
+            <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-500"></i>
+            <span data-i18n="btnExportCsv">Exportar CSV</span>
+          </button>
+          
+          <select id="pageSizeSelect" class="px-2.5 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200">
+            <option value="10">10 / pág.</option>
+            <option value="25" selected>25 / pág.</option>
+            <option value="50">50 / pág.</option>
+            <option value="100">100 / pág.</option>
           </select>
         </div>
       </div>
 
       <!-- Responsive Table Container -->
-      <div class="overflow-x-auto rounded-xl border border-slate-800">
-        <table class="w-full text-left text-xs border-collapse">
+      <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800/80">
+        <table class="w-full text-left border-collapse text-xs">
           <thead>
-            <tr class="bg-slate-950/80 text-slate-300 uppercase tracking-wider font-semibold border-b border-slate-800 select-none">
-              <th class="p-3 cursor-pointer hover:text-indigo-400 transition" data-sort="id">ID Orden <span class="sort-icon"></span></th>
-              <th class="p-3 cursor-pointer hover:text-indigo-400 transition" data-sort="date">Fecha <span class="sort-icon"></span></th>
-              <th class="p-3 cursor-pointer hover:text-indigo-400 transition" data-sort="product">Producto <span class="sort-icon"></span></th>
-              <th class="p-3 cursor-pointer hover:text-indigo-400 transition" data-sort="category">Categoría <span class="sort-icon"></span></th>
-              <th class="p-3 cursor-pointer hover:text-indigo-400 transition" data-sort="region">Región <span class="sort-icon"></span></th>
-              <th class="p-3 cursor-pointer hover:text-indigo-400 transition" data-sort="payment">Método Pago <span class="sort-icon"></span></th>
-              <th class="p-3 cursor-pointer hover:text-indigo-400 transition text-right" data-sort="qty">Cant. <span class="sort-icon"></span></th>
-              <th class="p-3 cursor-pointer hover:text-indigo-400 transition text-right" data-sort="price">Total ($) <span class="sort-icon"></span></th>
-              <th class="p-3 cursor-pointer hover:text-indigo-400 transition text-center" data-sort="rating">Rating <span class="sort-icon"></span></th>
-              <th class="p-3 cursor-pointer hover:text-indigo-400 transition text-center" data-sort="delivery">Envío <span class="sort-icon"></span></th>
+            <tr class="bg-slate-100/80 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-800">
+              <th class="p-3 cursor-pointer select-none hover:text-indigo-500" data-sort="id"><span data-i18n="thId">ID Orden</span> <span class="sort-indicator"></span></th>
+              <th class="p-3 cursor-pointer select-none hover:text-indigo-500" data-sort="date"><span data-i18n="thDate">Fecha</span> <span class="sort-indicator"></span></th>
+              <th class="p-3 cursor-pointer select-none hover:text-indigo-500" data-sort="customer"><span data-i18n="thCustomer">Cliente</span> <span class="sort-indicator"></span></th>
+              <th class="p-3 cursor-pointer select-none hover:text-indigo-500" data-sort="category"><span data-i18n="thCategory">Categoría</span> <span class="sort-indicator"></span></th>
+              <th class="p-3 cursor-pointer select-none hover:text-indigo-500" data-sort="region"><span data-i18n="thRegion">Región</span> <span class="sort-indicator"></span></th>
+              <th class="p-3 cursor-pointer select-none hover:text-indigo-500" data-sort="payment"><span data-i18n="thPayment">Pago</span> <span class="sort-indicator"></span></th>
+              <th class="p-3 cursor-pointer select-none hover:text-indigo-500 text-right" data-sort="qty"><span data-i18n="thQty">Cant.</span> <span class="sort-indicator"></span></th>
+              <th class="p-3 cursor-pointer select-none hover:text-indigo-500 text-right" data-sort="discount"><span data-i18n="thDiscount">Desc.</span> <span class="sort-indicator"></span></th>
+              <th class="p-3 cursor-pointer select-none hover:text-indigo-500 text-right" data-sort="revenue"><span data-i18n="thRevenue">Ingreso</span> <span class="sort-indicator"></span></th>
+              <th class="p-3 cursor-pointer select-none hover:text-indigo-500 text-center" data-sort="rating"><span data-i18n="thRating">Rating</span> <span class="sort-indicator"></span></th>
+              <th class="p-3 cursor-pointer select-none hover:text-indigo-500 text-center" data-sort="delivery"><span data-i18n="thDelivery">Envío</span> <span class="sort-indicator"></span></th>
             </tr>
           </thead>
-          <tbody id="tableBody" class="divide-y divide-slate-800/80 text-slate-300">
-            <!-- Dynamically populated -->
+          <tbody id="tableBody" class="divide-y divide-slate-100 dark:divide-slate-800/60 text-slate-600 dark:text-slate-300">
+            <!-- Rows injected dynamically -->
           </tbody>
         </table>
       </div>
 
-      <!-- Table Pagination Controls -->
-      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 text-xs">
-        <div class="text-slate-400">
-          Mostrando <span id="paginationStart" class="font-bold text-white">0</span> a <span id="paginationEnd" class="font-bold text-white">0</span> de <span id="paginationTotal" class="font-bold text-white">0</span>
+      <!-- Pagination Footer -->
+      <div id="paginationContainer" class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+        <div class="text-xs text-slate-500 dark:text-slate-400">
+          <span data-i18n="pagShowing">Mostrando</span> <span id="paginationStart" class="font-bold text-slate-800 dark:text-slate-200">0</span> <span data-i18n="pagTo">a</span> <span id="paginationEnd" class="font-bold text-slate-800 dark:text-slate-200">0</span> <span data-i18n="pagOf">de</span> <span id="paginationTotal" class="font-bold text-slate-800 dark:text-slate-200">0</span> <span data-i18n="pagRecords">transacciones</span>
         </div>
-        <div class="flex items-center gap-2">
-          <button id="prevPageBtn" class="px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-300 disabled:opacity-30 disabled:pointer-events-none transition flex items-center gap-1">
-            <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i> Anterior
+        <div class="flex items-center gap-1.5">
+          <button id="prevPageBtn" class="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition text-xs font-semibold flex items-center gap-1">
+            <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i> <span data-i18n="pagPrev">Anterior</span>
           </button>
-          <span id="pageBadge" class="font-bold px-3 py-1 rounded-lg bg-indigo-950 text-indigo-400 border border-indigo-800">1</span>
-          <button id="nextPageBtn" class="px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-300 disabled:opacity-30 disabled:pointer-events-none transition flex items-center gap-1">
-            Siguiente <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+          <span id="pageBadge" class="text-xs font-bold px-3 py-1 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-xl border border-indigo-200 dark:border-indigo-800">1 / 1</span>
+          <button id="nextPageBtn" class="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition text-xs font-semibold flex items-center gap-1">
+            <span data-i18n="pagNext">Siguiente</span> <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
           </button>
         </div>
       </div>
@@ -463,250 +754,619 @@
 
   </main>
 
-  <footer class="mt-auto border-t border-slate-800 bg-slate-950 py-4 px-4 text-center text-xs text-slate-400">
+  <!-- ORDER DETAIL MODAL OVERLAY -->
+  <div id="modalOverlay" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="max-w-lg w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl p-6 relative">
+      <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center font-bold">
+            <i data-lucide="receipt" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h4 class="text-base font-bold text-slate-900 dark:text-white" id="modalOrderId">ORD-00000</h4>
+            <p class="text-xs text-slate-500 dark:text-slate-400" id="modalOrderDate">Fecha</p>
+          </div>
+        </div>
+        <button id="closeModalBtn" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 py-4 text-xs">
+        <div>
+          <span class="text-slate-400 block uppercase tracking-wider text-[10px] font-semibold" data-i18n="modalCust">Cliente ID</span>
+          <span class="font-bold text-slate-800 dark:text-slate-100 text-sm" id="modalCustomerId">-</span>
+        </div>
+        <div>
+          <span class="text-slate-400 block uppercase tracking-wider text-[10px] font-semibold" data-i18n="modalCat">Categoría</span>
+          <span class="font-bold text-indigo-600 dark:text-indigo-400 text-sm" id="modalCategory">-</span>
+        </div>
+        <div>
+          <span class="text-slate-400 block uppercase tracking-wider text-[10px] font-semibold" data-i18n="modalReg">Región</span>
+          <span class="font-bold text-slate-800 dark:text-slate-100 text-sm" id="modalRegion">-</span>
+        </div>
+        <div>
+          <span class="text-slate-400 block uppercase tracking-wider text-[10px] font-semibold" data-i18n="modalPay">Método de Pago</span>
+          <span class="font-bold text-slate-800 dark:text-slate-100 text-sm" id="modalPayment">-</span>
+        </div>
+        <div>
+          <span class="text-slate-400 block uppercase tracking-wider text-[10px] font-semibold" data-i18n="modalQtyPrice">Cantidad &amp; Precio</span>
+          <span class="font-bold text-slate-800 dark:text-slate-100 text-sm" id="modalQtyPrice">-</span>
+        </div>
+        <div>
+          <span class="text-slate-400 block uppercase tracking-wider text-[10px] font-semibold" data-i18n="modalDisc">Descuento Aplicado</span>
+          <span class="font-bold text-rose-500 text-sm" id="modalDiscount">-</span>
+        </div>
+        <div>
+          <span class="text-slate-400 block uppercase tracking-wider text-[10px] font-semibold" data-i18n="modalDeliv">Tiempo de Entrega</span>
+          <span class="font-bold text-slate-800 dark:text-slate-100 text-sm" id="modalDelivery">-</span>
+        </div>
+        <div>
+          <span class="text-slate-400 block uppercase tracking-wider text-[10px] font-semibold" data-i18n="modalRate">Calificación Cliente</span>
+          <span class="font-bold text-amber-500 text-sm" id="modalRating">-</span>
+        </div>
+      </div>
+
+      <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <span class="text-xs font-semibold text-slate-600 dark:text-slate-300" data-i18n="modalTotalRev">Ingreso Neto Total:</span>
+        <span class="text-lg font-black text-slate-900 dark:text-white" id="modalRevenue">$0.00</span>
+      </div>
+
+      <div class="mt-4 flex justify-end">
+        <button onclick="document.getElementById('modalOverlay').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition" data-i18n="modalClose">
+          Cerrar Detalle
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="mt-auto border-t border-slate-200 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/70 py-4 px-4 text-center text-xs text-slate-500 dark:text-slate-400">
     <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
       <div class="flex items-center gap-2">
-        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-        <span>Motor Analítico en Tiempo Real Listo</span>
+        <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+        <span data-i18n="footerStatus">OmniPulse Industrial BI v3.0 &bull; Conectado en tiempo real</span>
       </div>
-      <p>OmniPulse BI &copy; 2026 &bull; Diseñado con Tailwind CSS, Chart.js &amp; PapaParse</p>
+      <p data-i18n="footerCredits">Control Estadístico de Procesos (CEP) &bull; Gestión Lean &bull; Chart.js &bull; Tailwind CSS</p>
     </div>
   </footer>
 
   <script>
     /* ==========================================================================
-       Global Application State
+       Bilingual Internationalization Dictionary (ES / EN)
        ========================================================================== */
+    const i18n = {
+      es: {
+        shortcutSearch: "💡 Atajo: Pulsa <kbd class='px-1.5 py-0.5 bg-black/30 rounded font-mono text-[10px]'>/</kbd> para buscar",
+        shortcutTheme: "Pulsa <kbd class='px-1.5 py-0.5 bg-black/30 rounded font-mono text-[10px]'>T</kbd> para estilo",
+        shortcutEasy: "Pulsa <kbd class='px-1.5 py-0.5 bg-black/30 rounded font-mono text-[10px]'>N</kbd> para Modo Accesible",
+        badgeTitle: "Industrial BI & Operaciones",
+        easyMobile: "Fácil",
+        easyNavDisabled: "Navegación Fácil: Desactivada",
+        easyNavEnabled: "Navegación Fácil: ACTIVA",
+        themeDark: "Oscuro",
+        themeLight: "Claro",
+        themeMono: "B&N",
+        btnUpload: "Subir CSV",
+        btnPrint: "Imprimir / PDF",
+        jumpTo: "Ir rápido a:",
+        navParetoSpc: "Pareto & CEP (SPC)",
+        navEoq: "Calculadora EOQ & ROP",
+        navKpis: "Indicadores KPIs",
+        navCharts: "Gráficos de Ventas",
+        navTable: "Tabla de Datos",
+        filterTitle: "Filtros y Búsqueda Interactiva",
+        btnReset: "Limpiar Filtros (Esc)",
+        labelSearch: "Búsqueda Rápida",
+        labelDate: "Rango de Fecha",
+        labelCategory: "Categoría",
+        labelPayment: "Método de Pago",
+        optAllCategories: "Todas las Categorías",
+        optAllPayments: "Todos los Métodos",
+        labelRegion: "Filtrar por Región:",
+        pillAll: "Todas",
+        ieSuiteTitle: "Suite de Ingeniería Industrial & Calidad Operativa",
+        ieSuiteSubtitle: "Diagrama de Pareto 80/20, Gráficos de Control Estadístico de Procesos (CEP/SPC) y Capacidad de Proceso",
+        kpiOtifTitle: "Nivel de Servicio OTIF",
+        kpiOtifSubtitle: "Despachos ≤ 5 días objetivo",
+        kpiMeanLeadTitle: "Lead Time Logístico (X̄)",
+        kpiCpTitle: "Índice Capacidad Cp",
+        kpiCpkTitle: "Índice Centrado Cpk",
+        paretoTitle: "Diagrama de Pareto 80/20 (Ingresos)",
+        paretoTag: "Pocos Vitales",
+        paretoSubtitle: "Barras de facturación ordenada + Línea de porcentaje acumulado con corte en 80%",
+        spcTitle: "Carta de Control CEP / SPC (Días de Entrega)",
+        spcSubtitle: "Límites Estadísticos: Media (X̄), Límite Superior (UCL = X̄ + 3σ) e Inferior (LCL)",
+        eoqTitle: "Simulador de Inventarios: Lote Óptimo EOQ & Punto de Reorden (ROP)",
+        eoqSubtitle: "Calcula la cantidad económica de pedido y el momento de compra según la demanda actual del dataset",
+        eoqBadge: "Fórmula Wilson EOQ",
+        eoqCostOrder: "Costo por Realizar Pedido (S) [$]",
+        eoqCostHold: "Costo Anual de Almacenamiento (H) [$ / unid]",
+        eoqServiceLevel: "Nivel de Confianza Logística (Z)",
+        btnRecalcEoq: "Recalcular Modelo de Inventario",
+        eoqQTitle: "Lote Económico (Q*)",
+        eoqQDesc: "Tamaño de lote óptimo que minimiza el costo total.",
+        eoqRopTitle: "Punto de Reorden (ROP)",
+        eoqCostTitle: "Costo Total Inventario",
+        kpiRevTitle: "Ingresos Totales",
+        kpiOrdersTitle: "Pedidos Procesados",
+        kpiUnitsTitle: "Unidades Vendidas",
+        kpiRatingTitle: "Satisfacción Cliente",
+        kpiRatingSub: "Evaluación promedio",
+        kpiDeliveryTitle: "Rapidez Logística",
+        kpiDeliverySub: "Tiempo promedio",
+        chartTimelineTitle: "Evolución de Ventas en el Tiempo",
+        chartTimelineSub: "Facturación acumulada mensual",
+        btnLine: "Línea",
+        btnBar: "Barras",
+        chartCatTitle: "Participación por Categoría",
+        chartCatSub: "Distribución del valor facturado",
+        chartRegTitle: "Ingresos por Región Geográfica",
+        chartRegSub: "Comparativa territorial",
+        chartPayTitle: "Métodos de Pago",
+        chartPaySub: "Canales transaccionales preferidos",
+        chartDelivRatingTitle: "Logística vs Satisfacción",
+        chartDelivRatingSub: "Calificación de clientes según días de entrega",
+        tableTitle: "Listado de Transacciones",
+        tableSubtitle: "Haz clic en cualquier fila para ver el comprobante detallado del pedido",
+        btnExportCsv: "Exportar CSV",
+        thId: "ID Orden",
+        thDate: "Fecha",
+        thCustomer: "Cliente",
+        thCategory: "Categoría",
+        thRegion: "Región",
+        thPayment: "Pago",
+        thQty: "Cant.",
+        thDiscount: "Desc.",
+        thRevenue: "Ingreso",
+        thRating: "Rating",
+        thDelivery: "Envío",
+        pagShowing: "Mostrando",
+        pagTo: "a",
+        pagOf: "de",
+        pagRecords: "transacciones",
+        pagPrev: "Anterior",
+        pagNext: "Siguiente",
+        modalCust: "Cliente ID",
+        modalCat: "Categoría",
+        modalReg: "Región",
+        modalPay: "Método de Pago",
+        modalQtyPrice: "Cantidad & Precio",
+        modalDisc: "Descuento Aplicado",
+        modalDeliv: "Tiempo de Entrega",
+        modalRate: "Calificación Cliente",
+        modalTotalRev: "Ingreso Neto Total:",
+        modalClose: "Cerrar Detalle",
+        footerStatus: "OmniPulse Industrial BI v3.0 • Conectado en tiempo real",
+        footerCredits: "Control Estadístico de Procesos (CEP) • Gestión Lean • Chart.js • Tailwind CSS"
+      },
+      en: {
+        shortcutSearch: "💡 Shortcut: Press <kbd class='px-1.5 py-0.5 bg-black/30 rounded font-mono text-[10px]'>/</kbd> to search",
+        shortcutTheme: "Press <kbd class='px-1.5 py-0.5 bg-black/30 rounded font-mono text-[10px]'>T</kbd> for theme",
+        shortcutEasy: "Press <kbd class='px-1.5 py-0.5 bg-black/30 rounded font-mono text-[10px]'>N</kbd> for Accessible Mode",
+        badgeTitle: "Industrial BI & Operations",
+        easyMobile: "Easy",
+        easyNavDisabled: "Easy Navigation: Disabled",
+        easyNavEnabled: "Easy Navigation: ACTIVE",
+        themeDark: "Dark",
+        themeLight: "Light",
+        themeMono: "B&W",
+        btnUpload: "Upload CSV",
+        btnPrint: "Print / PDF",
+        jumpTo: "Quick Jump to:",
+        navParetoSpc: "Pareto & SPC Control",
+        navEoq: "EOQ & ROP Calculator",
+        navKpis: "KPI Indicators",
+        navCharts: "Sales Analytics",
+        navTable: "Data Table",
+        filterTitle: "Interactive Filters & Search",
+        btnReset: "Reset Filters (Esc)",
+        labelSearch: "Quick Search",
+        labelDate: "Date Range",
+        labelCategory: "Category",
+        labelPayment: "Payment Method",
+        optAllCategories: "All Categories",
+        optAllPayments: "All Payment Methods",
+        labelRegion: "Filter by Region:",
+        pillAll: "All",
+        ieSuiteTitle: "Industrial Engineering & Operational Quality Suite",
+        ieSuiteSubtitle: "80/20 Pareto Chart, Statistical Process Control (SPC) Charts & Process Capability",
+        kpiOtifTitle: "OTIF Service Level",
+        kpiOtifSubtitle: "Fulfillment ≤ 5 days goal",
+        kpiMeanLeadTitle: "Logistics Lead Time (X̄)",
+        kpiCpTitle: "Capability Index Cp",
+        kpiCpkTitle: "Centering Index Cpk",
+        paretoTitle: "80/20 Pareto Chart (Revenue)",
+        paretoTag: "Vital Few",
+        paretoSubtitle: "Sorted revenue bars + Cumulative percentage curve with 80% threshold line",
+        spcTitle: "SPC Control Chart (Delivery Lead Time)",
+        spcSubtitle: "Statistical Limits: Mean (X̄), Upper Control Limit (UCL = X̄ + 3σ) & Lower (LCL)",
+        eoqTitle: "Inventory Simulator: Economic Order Quantity (EOQ) & Reorder Point (ROP)",
+        eoqSubtitle: "Computes optimal batch size and replenishment triggers based on current dataset demand",
+        eoqBadge: "Wilson EOQ Formula",
+        eoqCostOrder: "Ordering Cost per Purchase (S) [$]",
+        eoqCostHold: "Annual Holding Cost (H) [$ / unit]",
+        eoqServiceLevel: "Logistics Service Confidence (Z)",
+        btnRecalcEoq: "Recalculate Inventory Model",
+        eoqQTitle: "Economic Order Qty (Q*)",
+        eoqQDesc: "Optimal lot size that minimizes total inventory cost.",
+        eoqRopTitle: "Reorder Point (ROP)",
+        eoqCostTitle: "Total Inventory Cost",
+        kpiRevTitle: "Total Revenue",
+        kpiOrdersTitle: "Processed Orders",
+        kpiUnitsTitle: "Units Sold",
+        kpiRatingTitle: "Customer Satisfaction",
+        kpiRatingSub: "Average evaluation",
+        kpiDeliveryTitle: "Logistics Velocity",
+        kpiDeliverySub: "Average lead time",
+        chartTimelineTitle: "Sales Trend Over Time",
+        chartTimelineSub: "Monthly accumulated gross sales",
+        btnLine: "Line",
+        btnBar: "Bars",
+        chartCatTitle: "Category Market Share",
+        chartCatSub: "Revenue volume distribution",
+        chartRegTitle: "Revenue by Geographic Region",
+        chartRegSub: "Territorial benchmark",
+        chartPayTitle: "Payment Methods",
+        chartPaySub: "Customer payment channel preference",
+        chartDelivRatingTitle: "Logistics vs Satisfaction",
+        chartDelivRatingSub: "Customer rating correlated by delivery days",
+        tableTitle: "Transactions Ledger",
+        tableSubtitle: "Click on any row to open the full order receipt and breakdown",
+        btnExportCsv: "Export CSV",
+        thId: "Order ID",
+        thDate: "Date",
+        thCustomer: "Customer",
+        thCategory: "Category",
+        thRegion: "Region",
+        thPayment: "Payment",
+        thQty: "Qty",
+        thDiscount: "Disc.",
+        thRevenue: "Revenue",
+        thRating: "Rating",
+        thDelivery: "Delivery",
+        pagShowing: "Showing",
+        pagTo: "to",
+        pagOf: "of",
+        pagRecords: "transactions",
+        pagPrev: "Previous",
+        pagNext: "Next",
+        modalCust: "Customer ID",
+        modalCat: "Category",
+        modalReg: "Region",
+        modalPay: "Payment Method",
+        modalQtyPrice: "Quantity & Price",
+        modalDisc: "Discount Applied",
+        modalDeliv: "Delivery Time",
+        modalRate: "Customer Rating",
+        modalTotalRev: "Net Revenue Total:",
+        modalClose: "Close Receipt",
+        footerStatus: "OmniPulse Industrial BI v3.0 • Connected in real-time",
+        footerCredits: "Statistical Process Control (SPC) • Lean Six Sigma • Chart.js • Tailwind CSS"
+      }
+    };
+
+    /* Global State */
+    let currentLang = 'es';
     let rawDataset = [];
     let filteredDataset = [];
     let selectedRegion = 'ALL';
     let currentPage = 1;
     let itemsPerPage = 25;
     let currentSort = { column: 'date', order: 'desc' };
+    let timelineChartType = 'line';
+    let isEasyMode = false;
 
+    // Charts instances registry
     const charts = {
       timeline: null,
       category: null,
       region: null,
       payment: null,
-      deliveryRating: null
+      deliveryRating: null,
+      pareto: null,
+      spc: null
     };
 
-    /**
-     * Resilient Date Parser:
-     * Handles M/D/YYYY, MM/DD/YYYY, YYYY-MM-DD, ISO timestamps, and timestamps
-     */
-    function parseFlexibleDate(dateVal) {
-      if (!dateVal) return '2025-01-01';
-      const str = String(dateVal).trim();
-      
-      // Match M/D/YYYY or MM/DD/YYYY
-      const slashMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-      if (slashMatch) {
-        const month = slashMatch[1].padStart(2, '0');
-        const day = slashMatch[2].padStart(2, '0');
-        const year = slashMatch[3];
-        return `${year}-${month}-${day}`;
+    /* ==========================================================================
+       Language Switcher Execution
+       ========================================================================== */
+    function setLanguage(lang) {
+      currentLang = lang;
+      localStorage.setItem('omni_lang', lang);
+
+      const esBtn = document.getElementById('langEsBtn');
+      const enBtn = document.getElementById('langEnBtn');
+
+      if (lang === 'es') {
+        esBtn.className = 'lang-btn px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm';
+        enBtn.className = 'lang-btn px-2.5 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1 text-slate-600 dark:text-slate-300';
+      } else {
+        enBtn.className = 'lang-btn px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm';
+        esBtn.className = 'lang-btn px-2.5 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1 text-slate-600 dark:text-slate-300';
       }
 
-      // Match YYYY-MM-DD
-      const dashMatch = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
-      if (dashMatch) {
-        const year = dashMatch[1];
-        const month = dashMatch[2].padStart(2, '0');
-        const day = dashMatch[3].padStart(2, '0');
-        return `${year}-${month}-${day}`;
-      }
+      // Translate DOM nodes matching data-i18n
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (i18n[lang] && i18n[lang][key]) {
+          el.innerHTML = i18n[lang][key];
+        }
+      });
 
-      const d = new Date(str);
-      if (!isNaN(d.getTime())) {
-        return d.toISOString().split('T')[0];
+      // Update easy mode text status
+      document.getElementById('easyModeLabel').textContent = isEasyMode 
+        ? i18n[currentLang].easyNavEnabled 
+        : i18n[currentLang].easyNavDisabled;
+
+      // Update placeholders
+      document.getElementById('searchInput').placeholder = lang === 'es' 
+        ? "Buscar producto, cliente, orden... (/)" 
+        : "Search product, customer, order... (/)";
+
+      // Refresh KPIs and Charts with new language titles
+      if (filteredDataset.length > 0) {
+        updateKPIs();
+        calculateLeanOperations();
+        calculateEOQ();
+        renderCharts();
+        renderTable();
       }
-      return '2025-01-01';
     }
 
-    /**
-     * High-Fidelity Synthetic Dataset Generator (5,000 records)
-     * Guaranteeing immediate presentation without 0 values.
-     */
-    function generateFallbackDataset(count = 5000) {
+    // Generates 5,000 realistic transactions mirroring ecommerce_sales_analytics_5000.csv
+    function generateSyntheticDataset(count = 5000) {
       const categories = ['Electronics', 'Clothing', 'Home & Kitchen', 'Beauty & Personal Care', 'Sports & Outdoors', 'Books'];
       const regions = ['North', 'South', 'East', 'West'];
       const payments = ['Credit Card', 'PayPal', 'Debit Card', 'Cash on Delivery', 'Crypto'];
-      const productsMap = {
-        'Electronics': ['Wireless Earbuds', 'Smartphone 5G', '4K Smart TV', 'Bluetooth Speaker', 'Smartwatch Pro', 'Gaming Laptop'],
-        'Clothing': ['Classic Denim Jeans', 'Hooded Sweatshirt', 'Cotton T-Shirt', 'Running Shoes', 'Winter Parka'],
-        'Home & Kitchen': ['Air Fryer Deluxe', 'Espresso Machine', 'Non-stick Cookware Set', 'Robot Vacuum', 'Electric Kettle'],
-        'Beauty & Personal Care': ['Facial Serum SPF50', 'Hair Dryer Pro', 'Organic Face Cleanser', 'Sonic Toothbrush'],
-        'Sports & Outdoors': ['Yoga Mat Non-Slip', 'Adjustable Dumbbells', 'Camping Tent 4P', 'Insulated Flask'],
-        'Books': ['Data Science Handbook', 'Atomic Habits', 'The Lean Startup', 'Deep Learning Guide']
-      };
-
-      const start = new Date('2025-01-01').getTime();
-      const end = new Date('2025-12-31').getTime();
+      
+      const startDate = new Date('2025-01-01').getTime();
+      const endDate = new Date('2026-06-30').getTime();
       const list = [];
 
       for (let i = 1; i <= count; i++) {
         const cat = categories[Math.floor(Math.random() * categories.length)];
-        const pList = productsMap[cat];
-        const prod = pList[Math.floor(Math.random() * pList.length)];
         const reg = regions[Math.floor(Math.random() * regions.length)];
         const pay = payments[Math.floor(Math.random() * payments.length)];
         const qty = Math.floor(Math.random() * 4) + 1;
-        const unitPrice = parseFloat((Math.random() * 140 + 15).toFixed(2));
-        const total = parseFloat((qty * unitPrice).toFixed(2));
-        const delivery = Math.floor(Math.random() * 7) + 1;
+        const unitPrice = parseFloat((Math.random() * 180 + 15).toFixed(2));
+        const discountRates = [0, 0.05, 0.10, 0.15, 0.20, 0.25];
+        const discount = discountRates[Math.floor(Math.random() * discountRates.length)];
         
-        let ratingCalc = 5.0 - (delivery * 0.12) + ((Math.random() - 0.5) * 0.9);
+        const gross = qty * unitPrice;
+        const revenue = parseFloat((gross * (1 - discount)).toFixed(2));
+        
+        // Delivery days following natural normal distribution with some outliers
+        let deliveryDays = Math.round(3.8 + (Math.random() * 3 - 1.5) + (Math.random() > 0.94 ? 4 : 0));
+        deliveryDays = Math.max(1, Math.min(10, deliveryDays));
+        
+        let ratingCalc = 5.0 - (deliveryDays * 0.16) + ((Math.random() - 0.5) * 0.8);
         ratingCalc = Math.min(5, Math.max(1, ratingCalc));
-        const rating = parseFloat(ratingCalc.toFixed(1));
+        const customerRating = parseFloat(ratingCalc.toFixed(1));
 
-        const randDate = new Date(start + Math.random() * (end - start));
-        const m = String(randDate.getMonth() + 1);
-        const d = String(randDate.getDate());
-        const y = randDate.getFullYear();
-        const rawDateString = `${m}/${d}/${y}`;
+        const randDate = new Date(startDate + Math.random() * (endDate - startDate));
+        const dateStr = randDate.toISOString().split('T')[0];
 
         list.push({
-          'Order ID': `ORD-${100000 + i}`,
-          'Date': rawDateString,
-          'Product Name': prod,
-          'Category': cat,
-          'Region': reg,
-          'Payment Method': pay,
-          'Quantity': qty,
-          'Total Amount': total,
-          'Customer Rating': rating,
-          'Delivery Time (Days)': delivery
+          id: `ORD-${100000 + i}`,
+          date: dateStr,
+          customer: `CUST-${Math.floor(Math.random() * 900 + 100)}`,
+          category: cat,
+          region: reg,
+          payment: pay,
+          qty: qty,
+          unitPrice: unitPrice,
+          discount: discount,
+          revenue: revenue,
+          rating: customerRating,
+          delivery: deliveryDays
         });
       }
-
       return list;
     }
 
-    /**
-     * Universal normalizer that maps varying CSV column headers
-     */
-    function normalizeRows(rows) {
-      if (!Array.isArray(rows) || rows.length === 0) return [];
-
-      return rows.map((r, index) => {
-        // Find price/amount
-        const rawAmount = r['Total_Amount'] ?? r['Total Amount'] ?? r['Total_Price'] ?? r['Amount'] ?? r['Sales'] ?? r['price'] ?? r['Price'] ?? 0;
-        const price = parseFloat(String(rawAmount).replace(/[^0-9.-]+/g, '')) || 0;
-
-        // Find quantity
-        const rawQty = r['Quantity'] ?? r['Qty'] ?? r['Units'] ?? r['quantity'] ?? 1;
-        const qty = parseInt(rawQty, 10) || 1;
-
-        // Find date
-        const rawDate = r['Order_Date'] ?? r['Order Date'] ?? r['Date'] ?? r['date'] ?? '2025-01-01';
-        const date = parseFlexibleDate(rawDate);
-
-        // Find product
-        const product = r['Product'] ?? r['Product_Name'] ?? r['Product Name'] ?? r['item'] ?? `Producto #${index + 1}`;
-
-        // Find category
-        const category = r['Category'] ?? r['Product_Category'] ?? r['Product Category'] ?? 'General';
-
-        // Find region
-        const region = r['Region'] ?? r['region'] ?? 'North';
-
-        // Find payment method
-        const payment = r['Payment_Method'] ?? r['Payment Method'] ?? r['Payment'] ?? r['payment'] ?? 'Credit Card';
-
-        // Find customer rating
-        const rawRating = r['Customer_Rating'] ?? r['Customer Rating'] ?? r['Rating'] ?? r['rating'] ?? 4.5;
-        const rating = parseFloat(rawRating) || 4.5;
-
-        // Find delivery time
-        const rawDelivery = r['Delivery_Time_Days'] ?? r['Delivery Time (Days)'] ?? r['Delivery_Days'] ?? r['Delivery'] ?? 3;
-        const delivery = parseInt(rawDelivery, 10) || 3;
-
-        // Order ID
-        const id = r['Order_ID'] ?? r['Order ID'] ?? r['ID'] ?? r['id'] ?? `ORD-${100000 + index + 1}`;
-
-        return {
-          id: String(id),
-          date,
-          product: String(product),
-          category: String(category),
-          region: String(region),
-          payment: String(payment),
-          qty,
-          price,
-          rating,
-          delivery
-        };
-      }).filter(item => !isNaN(item.price) && item.price > 0);
-    }
-
-    function loadInitialData() {
-      // 1. First, populate immediately with synthesized fallback so the screen NEVER shows 0
-      const initialFallback = generateFallbackDataset(5000);
-      rawDataset = normalizeRows(initialFallback);
-      populateFilterOptions();
-      applyFilters();
-
-      // 2. Try fetching ecommerce_sales_analytics_5000.csv directly from the same directory
-      fetch('./ecommerce_sales_analytics_5000.csv')
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Archivo no encontrado automáticamente (código ' + response.status + ')');
-          }
-          return response.text();
-        })
-        .then(csvText => {
+    /* Dataset Loading and Flexible Parsing */
+    async function loadDataset() {
+      try {
+        const response = await fetch('ecommerce_sales_analytics_5000.csv');
+        if (response.ok) {
+          const csvText = await response.text();
           Papa.parse(csvText, {
             header: true,
             dynamicTyping: true,
             skipEmptyLines: true,
             complete: function(results) {
               if (results.data && results.data.length > 0) {
-                const parsed = normalizeRows(results.data);
-                if (parsed.length > 0) {
-                  rawDataset = parsed;
-                  document.getElementById('activeFileName').textContent = 'ecommerce_sales_analytics_5000.csv (En vivo)';
-                  populateFilterOptions();
-                  applyFilters();
-                  showToast(`Cargados exitosamente ${parsed.length.toLocaleString()} registros desde tu CSV.`);
-                }
+                normalizeAndStoreData(results.data, 'ecommerce_sales_analytics_5000.csv');
+                return;
               }
+              useFallback();
+            },
+            error: function() {
+              useFallback();
             }
           });
-        })
-        .catch(err => {
-          // If direct fetch fails (e.g., file protocol restrictions or file placed in another directory)
-          console.warn('Fetch automático local:', err.message);
-          document.getElementById('activeFileName').textContent = 'ecommerce_sales_analytics_5000.csv (Demo activo)';
-        });
+          return;
+        }
+      } catch (e) {
+        // Fallback for CORS or direct file access
+      }
+      useFallback();
+    }
+
+    function useFallback() {
+      const synthetic = generateSyntheticDataset(5000);
+      normalizeAndStoreData(synthetic, 'ecommerce_sales_analytics_5000.csv (Demo Activa)');
+      showToast(currentLang === 'es' ? 'Cargados 5,000 registros analíticos con éxito.' : 'Loaded 5,000 analytical records successfully.');
+    }
+
+    function normalizeAndStoreData(rawRows, sourceName) {
+      document.getElementById('activeFileName').textContent = sourceName;
+
+      rawDataset = rawRows.map((r, index) => {
+        const id = r.order_id || r.Order_ID || r.Order_Id || r.id || `ORD-${100000 + index}`;
+        const date = normalizeDate(r.order_date || r.Order_Date || r.Date || r.date || '2025-01-01');
+        const customer = r.customer_id || r.Customer_ID || r.customer || `CUST-${200 + (index % 500)}`;
+        const category = r.product_category || r.Product_Category || r.Category || r.category || 'General';
+        const region = r.region || r.Region || 'General';
+        const payment = r.payment_method || r.Payment_Method || r.payment || 'Credit Card';
+        const qty = parseInt(r.quantity || r.Quantity || r.qty || 1, 10);
+        const unitPrice = parseFloat(r.unit_price || r.Unit_Price || 45.0);
+        const discount = parseFloat(r.discount || r.Discount || 0);
+        
+        let revenue = parseFloat(r.revenue || r.Revenue || r.total_amount || r.Total_Amount || (qty * unitPrice * (1 - discount)));
+        if (isNaN(revenue) || revenue <= 0) {
+          revenue = qty * unitPrice;
+        }
+
+        const rating = parseFloat(r.customer_rating || r.Customer_Rating || r.Rating || r.rating || 4.2);
+        const delivery = parseInt(r.delivery_days || r.Delivery_Time_Days || r.delivery || 3, 10);
+
+        return {
+          id: String(id),
+          date: date,
+          customer: String(customer),
+          category: String(category).trim(),
+          region: String(region).trim(),
+          payment: String(payment).trim(),
+          qty: qty,
+          unitPrice: unitPrice,
+          discount: discount,
+          revenue: parseFloat(revenue.toFixed(2)),
+          rating: rating,
+          delivery: delivery
+        };
+      }).filter(item => !isNaN(item.revenue) && item.revenue > 0);
+
+      populateFilterOptions();
+      applyFilters();
+    }
+
+    function normalizeDate(raw) {
+      if (!raw) return '2025-01-01';
+      const d = new Date(raw);
+      if (!isNaN(d.getTime())) {
+        return d.toISOString().split('T')[0];
+      }
+      return String(raw).slice(0, 10);
+    }
+
+    function setTheme(mode) {
+      const html = document.documentElement;
+      html.classList.remove('dark', 'theme-monochrome');
+      
+      const darkBtn = document.getElementById('themeDarkBtn');
+      const lightBtn = document.getElementById('themeLightBtn');
+      const monoBtn = document.getElementById('themeMonoBtn');
+
+      [darkBtn, lightBtn, monoBtn].forEach(b => {
+        b.classList.remove('bg-white', 'dark:bg-slate-900', 'shadow-sm', 'text-indigo-600', 'font-bold');
+        b.classList.add('text-slate-600', 'dark:text-slate-300');
+      });
+
+      if (mode === 'dark') {
+        html.classList.add('dark');
+        darkBtn.classList.add('bg-white', 'dark:bg-slate-900', 'shadow-sm', 'text-indigo-600', 'font-bold');
+      } else if (mode === 'light') {
+        lightBtn.classList.add('bg-white', 'shadow-sm', 'text-indigo-600', 'font-bold');
+      } else if (mode === 'monochrome') {
+        html.classList.add('dark', 'theme-monochrome');
+        monoBtn.classList.add('bg-white', 'dark:bg-slate-900', 'shadow-sm', 'text-indigo-600', 'font-bold');
+      }
+
+      localStorage.setItem('omni_theme', mode);
+      renderCharts();
+    }
+
+    function toggleEasyMode() {
+      isEasyMode = !isEasyMode;
+      document.body.classList.toggle('easy-mode', isEasyMode);
+      
+      const label = document.getElementById('easyModeLabel');
+      label.textContent = isEasyMode 
+        ? i18n[currentLang].easyNavEnabled 
+        : i18n[currentLang].easyNavDisabled;
+
+      showToast(isEasyMode 
+        ? (currentLang === 'es' ? 'Modo Navegación Fácil activado (Fuentes grandes y alto contraste)' : 'Easy Mode Activated (Enlarged fonts and high contrast)') 
+        : (currentLang === 'es' ? 'Modo estándar restablecido' : 'Standard Mode Restored'));
+    }
+
+    function setupShortcuts() {
+      window.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') {
+          if (e.key === 'Escape') {
+            e.target.blur();
+            resetAllFilters();
+          }
+          return;
+        }
+
+        if (e.key === '/') {
+          e.preventDefault();
+          document.getElementById('searchInput').focus();
+        } else if (e.key === 't' || e.key === 'T') {
+          const current = localStorage.getItem('omni_theme') || 'dark';
+          if (current === 'dark') setTheme('light');
+          else if (current === 'light') setTheme('monochrome');
+          else setTheme('dark');
+        } else if (e.key === 'n' || e.key === 'N') {
+          toggleEasyMode();
+        } else if (e.key === 'Escape') {
+          resetAllFilters();
+        }
+      });
     }
 
     function populateFilterOptions() {
-      // Categories
-      const categories = [...new Set(rawDataset.map(d => d.category))].filter(Boolean).sort();
+      const categories = [...new Set(rawDataset.map(d => d.category))].sort();
       const catSelect = document.getElementById('categorySelect');
-      catSelect.innerHTML = '<option value="ALL">Todas las Categorías</option>';
-      categories.forEach(c => {
+      catSelect.innerHTML = `<option value="ALL">${i18n[currentLang].optAllCategories}</option>`;
+      categories.forEach(cat => {
         const opt = document.createElement('option');
-        opt.value = c;
-        opt.textContent = c;
+        opt.value = cat;
+        opt.textContent = cat;
         catSelect.appendChild(opt);
       });
 
-      // Payments
-      const payments = [...new Set(rawDataset.map(d => d.payment))].filter(Boolean).sort();
+      const payments = [...new Set(rawDataset.map(d => d.payment))].sort();
       const paySelect = document.getElementById('paymentSelect');
-      paySelect.innerHTML = '<option value="ALL">Todos los Métodos</option>';
-      payments.forEach(p => {
+      paySelect.innerHTML = `<option value="ALL">${i18n[currentLang].optAllPayments}</option>`;
+      payments.forEach(pay => {
         const opt = document.createElement('option');
-        opt.value = p;
-        opt.textContent = p;
+        opt.value = pay;
+        opt.textContent = pay;
         paySelect.appendChild(opt);
       });
 
-      // Date Ranges
-      const dates = rawDataset.map(d => d.date).filter(Boolean).sort();
+      const regions = [...new Set(rawDataset.map(d => d.region))].sort();
+      const pillsContainer = document.getElementById('regionPillsContainer');
+      pillsContainer.innerHTML = `
+        <button class="region-pill px-3 py-1 text-xs rounded-full font-semibold transition border ${selectedRegion === 'ALL' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'}" data-region="ALL">${i18n[currentLang].pillAll}</button>
+      `;
+
+      regions.forEach(reg => {
+        const btn = document.createElement('button');
+        btn.className = `region-pill px-3 py-1 text-xs rounded-full font-semibold transition border ${selectedRegion === reg ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'}`;
+        btn.dataset.region = reg;
+        btn.textContent = reg;
+        pillsContainer.appendChild(btn);
+      });
+
+      pillsContainer.querySelectorAll('.region-pill').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          selectedRegion = e.target.dataset.region;
+          pillsContainer.querySelectorAll('.region-pill').forEach(p => {
+            p.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
+            p.classList.add('bg-slate-100', 'dark:bg-slate-800', 'text-slate-600', 'dark:text-slate-300', 'border-slate-200', 'dark:border-slate-700');
+          });
+          e.target.classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
+          e.target.classList.remove('bg-slate-100', 'dark:bg-slate-800', 'text-slate-600', 'dark:text-slate-300');
+          applyFilters();
+        });
+      });
+
+      const dates = rawDataset.map(d => d.date).sort();
       if (dates.length > 0) {
         document.getElementById('startDateInput').value = dates[0];
         document.getElementById('endDateInput').value = dates[dates.length - 1];
@@ -714,70 +1374,184 @@
     }
 
     function applyFilters() {
-      const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
-      const selectedCategory = document.getElementById('categorySelect').value;
-      const selectedPayment = document.getElementById('paymentSelect').value;
-      const startDate = document.getElementById('startDateInput').value;
-      const endDate = document.getElementById('endDateInput').value;
+      const search = document.getElementById('searchInput').value.trim().toLowerCase();
+      const category = document.getElementById('categorySelect').value;
+      const payment = document.getElementById('paymentSelect').value;
+      const start = document.getElementById('startDateInput').value;
+      const end = document.getElementById('endDateInput').value;
 
       filteredDataset = rawDataset.filter(item => {
-        // Search filter
-        if (searchTerm) {
-          const match = 
-            item.id.toLowerCase().includes(searchTerm) ||
-            item.product.toLowerCase().includes(searchTerm) ||
-            item.category.toLowerCase().includes(searchTerm) ||
-            item.region.toLowerCase().includes(searchTerm);
-          if (!match) return false;
+        if (search) {
+          const matched = 
+            item.id.toLowerCase().includes(search) ||
+            item.customer.toLowerCase().includes(search) ||
+            item.category.toLowerCase().includes(search) ||
+            item.region.toLowerCase().includes(search);
+          if (!matched) return false;
         }
 
-        // Region filter
-        if (selectedRegion !== 'ALL' && item.region.toLowerCase() !== selectedRegion.toLowerCase()) {
-          return false;
-        }
-
-        // Category filter
-        if (selectedCategory !== 'ALL' && item.category !== selectedCategory) {
-          return false;
-        }
-
-        // Payment filter
-        if (selectedPayment !== 'ALL' && item.payment !== selectedPayment) {
-          return false;
-        }
-
-        // Date range
-        if (startDate && item.date < startDate) return false;
-        if (endDate && item.date > endDate) return false;
+        if (selectedRegion !== 'ALL' && item.region !== selectedRegion) return false;
+        if (category !== 'ALL' && item.category !== category) return false;
+        if (payment !== 'ALL' && item.payment !== payment) return false;
+        if (start && item.date < start) return false;
+        if (end && item.date > end) return false;
 
         return true;
       });
 
       currentPage = 1;
       updateKPIs();
+      calculateLeanOperations();
+      calculateEOQ();
       renderCharts();
       renderTable();
     }
 
-    function formatCurrency(val) {
-      return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        maximumFractionDigits: 0
-      }).format(val || 0);
+    function resetAllFilters() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('categorySelect').value = 'ALL';
+      document.getElementById('paymentSelect').value = 'ALL';
+      selectedRegion = 'ALL';
+
+      const dates = rawDataset.map(d => d.date).sort();
+      if (dates.length > 0) {
+        document.getElementById('startDateInput').value = dates[0];
+        document.getElementById('endDateInput').value = dates[dates.length - 1];
+      }
+
+      document.querySelectorAll('.region-pill').forEach(p => {
+        if (p.dataset.region === 'ALL') {
+          p.classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
+          p.classList.remove('bg-slate-100', 'dark:bg-slate-800', 'text-slate-600', 'dark:text-slate-300');
+        } else {
+          p.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
+          p.classList.add('bg-slate-100', 'dark:bg-slate-800', 'text-slate-600', 'dark:text-slate-300');
+        }
+      });
+
+      applyFilters();
+      showToast(currentLang === 'es' ? 'Filtros restablecidos.' : 'Filters reset.');
+    }
+
+    function calculateLeanOperations() {
+      const count = filteredDataset.length;
+      if (count === 0) return;
+
+      // 1. Mean Lead Time and Standard Deviation
+      let sumLead = 0;
+      let onTimeCount = 0;
+      const targetDays = 5; // Standard logistics SLA
+
+      for (let i = 0; i < count; i++) {
+        const d = filteredDataset[i].delivery;
+        sumLead += d;
+        if (d <= targetDays) onTimeCount++;
+      }
+
+      const meanLead = sumLead / count;
+      let varianceSum = 0;
+      for (let i = 0; i < count; i++) {
+        varianceSum += Math.pow(filteredDataset[i].delivery - meanLead, 2);
+      }
+      const stdDev = Math.sqrt(varianceSum / count) || 0.5;
+
+      // 2. OTIF Rate
+      const otifRate = ((onTimeCount / count) * 100).toFixed(1);
+      document.getElementById('kpiOtif').textContent = `${otifRate}%`;
+
+      document.getElementById('kpiMeanLead').textContent = `${meanLead.toFixed(2)} ${currentLang === 'es' ? 'días' : 'days'}`;
+      document.getElementById('kpiStdDev').textContent = `${currentLang === 'es' ? 'Desv. Estándar' : 'Std Deviation'} σ: ${stdDev.toFixed(2)}`;
+
+      // 3. Process Capability Cp & Cpk
+      // Upper Specification Limit USL = 7 days, Lower LSL = 1 day
+      const USL = 7.0;
+      const LSL = 1.0;
+      const Cp = (USL - LSL) / (6 * stdDev);
+      const Cpu = (USL - meanLead) / (3 * stdDev);
+      const Cpl = (meanLead - LSL) / (3 * stdDev);
+      const Cpk = Math.min(Cpu, Cpl);
+
+      document.getElementById('kpiCpVal').textContent = Cp.toFixed(2);
+      const cpBadge = document.getElementById('kpiCpBadge');
+      if (Cp >= 1.33) {
+        cpBadge.textContent = currentLang === 'es' ? 'Proceso Altamente Capaz (Cp ≥ 1.33)' : 'Highly Capable Process (Cp ≥ 1.33)';
+        cpBadge.className = 'text-xs text-emerald-500 font-medium mt-1';
+      } else if (Cp >= 1.0) {
+        cpBadge.textContent = currentLang === 'es' ? 'Proceso Aceptable (1.0 ≤ Cp < 1.33)' : 'Adequate Process (1.0 ≤ Cp < 1.33)';
+        cpBadge.className = 'text-xs text-blue-500 font-medium mt-1';
+      } else {
+        cpBadge.textContent = currentLang === 'es' ? 'Proceso Incapaz (Cp < 1.0)' : 'Incapable Process (Cp < 1.0)';
+        cpBadge.className = 'text-xs text-rose-500 font-medium mt-1';
+      }
+
+      document.getElementById('kpiCpkVal').textContent = Cpk.toFixed(2);
+      const cpkBadge = document.getElementById('kpiCpkBadge');
+      if (Cpk >= 1.33) {
+        cpkBadge.textContent = currentLang === 'es' ? 'Excelente Centrado' : 'Well Centered Process';
+        cpkBadge.className = 'text-xs text-emerald-500 font-medium mt-1';
+      } else if (Cpk >= 1.0) {
+        cpkBadge.textContent = currentLang === 'es' ? 'Centrado Aceptable' : 'Acceptable Centering';
+        cpkBadge.className = 'text-xs text-amber-500 font-medium mt-1';
+      } else {
+        cpkBadge.textContent = currentLang === 'es' ? 'Riesgo de Fuera de Especificación' : 'Defect Generation Risk';
+        cpkBadge.className = 'text-xs text-rose-500 font-medium mt-1';
+      }
+    }
+
+    function calculateEOQ() {
+      const count = filteredDataset.length;
+      if (count === 0) return;
+
+      // Annual total demand projected
+      const totalUnits = filteredDataset.reduce((sum, item) => sum + item.qty, 0);
+      const annualDemand = Math.max(100, totalUnits * 2.5); // Extrapolated annual demand
+
+      const S = parseFloat(document.getElementById('eoqCostOrderInput').value) || 35;
+      const H = parseFloat(document.getElementById('eoqCostHoldInput').value) || 4.5;
+      const Z = parseFloat(document.getElementById('eoqZSelect').value) || 1.96;
+
+      // EOQ = sqrt( (2 * D * S) / H )
+      const Q_opt = Math.round(Math.sqrt((2 * annualDemand * S) / H));
+
+      // Daily demand (assuming 365 days)
+      const dailyDemand = annualDemand / 365;
+      const leadTime = filteredDataset.reduce((sum, d) => sum + d.delivery, 0) / count;
+      
+      // Standard deviation of lead time
+      let variance = 0;
+      for (let i = 0; i < count; i++) {
+        variance += Math.pow(filteredDataset[i].delivery - leadTime, 2);
+      }
+      const sigma_L = Math.sqrt(variance / count) || 0.8;
+
+      // Safety Stock SS = Z * sigma_L * dailyDemand
+      const safetyStock = Math.round(Z * sigma_L * Math.sqrt(dailyDemand * 2));
+      // ROP = (d * L) + SS
+      const ROP = Math.round((dailyDemand * leadTime) + safetyStock);
+
+      // Total Inventory Annual Cost = (D/Q)*S + (Q/2)*H
+      const ordersPerYear = (annualDemand / Q_opt).toFixed(1);
+      const totalCost = ((annualDemand / Q_opt) * S) + ((Q_opt / 2) * H);
+
+      document.getElementById('eoqResultQ').textContent = `${Q_opt.toLocaleString()} ${currentLang === 'es' ? 'unid' : 'units'}`;
+      document.getElementById('eoqResultRop').textContent = `${ROP.toLocaleString()} ${currentLang === 'es' ? 'unid' : 'units'}`;
+      document.getElementById('eoqSafetyStockDesc').textContent = currentLang === 'es' 
+        ? `Incluye stock de seguridad: ${safetyStock} unid` 
+        : `Includes safety stock: ${safetyStock} units`;
+
+      document.getElementById('eoqResultCost').textContent = formatCurrency(totalCost);
+      document.getElementById('eoqOrdersYearDesc').textContent = currentLang === 'es' 
+        ? `${ordersPerYear} órdenes proyectadas / año` 
+        : `${ordersPerYear} projected orders / year`;
     }
 
     function updateKPIs() {
       const count = filteredDataset.length;
       if (count === 0) {
-        document.getElementById('kpiRevenue').textContent = '$0';
-        document.getElementById('kpiAvgTicket').textContent = 'Ticket: $0';
-        document.getElementById('kpiOrders').textContent = '0';
-        document.getElementById('kpiUnits').textContent = '0';
-        document.getElementById('kpiUnitsPerOrder').textContent = '0 unid / orden';
-        document.getElementById('kpiRating').textContent = '0.0 ★';
-        document.getElementById('kpiDelivery').textContent = '0 días';
-        document.getElementById('recordsBadge').textContent = '0 registros';
+        ['kpiRevenue', 'kpiAvgTicket', 'kpiOrders', 'kpiFilteredShare', 'kpiUnits', 'kpiUnitsRatio', 'kpiRating', 'kpiDelivery', 'recordsBadge'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = '-';
+        });
         return;
       }
 
@@ -787,7 +1561,7 @@
       let totalDelivery = 0;
 
       for (let i = 0; i < count; i++) {
-        totalRevenue += filteredDataset[i].price;
+        totalRevenue += filteredDataset[i].revenue;
         totalUnits += filteredDataset[i].qty;
         totalRating += filteredDataset[i].rating;
         totalDelivery += filteredDataset[i].delivery;
@@ -797,150 +1571,263 @@
       const avgUnits = (totalUnits / count).toFixed(1);
       const avgRating = (totalRating / count).toFixed(1);
       const avgDelivery = (totalDelivery / count).toFixed(1);
+      const share = ((count / rawDataset.length) * 100).toFixed(0);
 
       document.getElementById('kpiRevenue').textContent = formatCurrency(totalRevenue);
       document.getElementById('kpiAvgTicket').textContent = `Ticket: ${formatCurrency(avgTicket)}`;
       document.getElementById('kpiOrders').textContent = count.toLocaleString();
+      document.getElementById('kpiFilteredShare').textContent = `${share}% ${currentLang === 'es' ? 'del catálogo' : 'of catalog'}`;
       document.getElementById('kpiUnits').textContent = totalUnits.toLocaleString();
-      document.getElementById('kpiUnitsPerOrder').textContent = `${avgUnits} unid / orden`;
+      document.getElementById('kpiUnitsRatio').textContent = `${avgUnits} ${currentLang === 'es' ? 'unid / orden' : 'unit / order'}`;
       document.getElementById('kpiRating').textContent = `${avgRating} ★`;
-      document.getElementById('kpiDelivery').textContent = `${avgDelivery} días`;
-      document.getElementById('recordsBadge').textContent = `${count.toLocaleString()} registros`;
+      document.getElementById('kpiDelivery').textContent = `${avgDelivery} ${currentLang === 'es' ? 'días' : 'days'}`;
+      document.getElementById('recordsBadge').textContent = `${count.toLocaleString()} ${currentLang === 'es' ? 'registros' : 'records'}`;
     }
 
-    function getThemeStyles() {
-      const isDark = document.documentElement.classList.contains('dark');
+    function formatCurrency(val) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: 0
+      }).format(val);
+    }
+
+    function getThemeChartOptions() {
+      const isMonochrome = document.documentElement.classList.contains('theme-monochrome');
+      const isDark = document.documentElement.classList.contains('dark') || isMonochrome;
+
       return {
-        textColor: isDark ? '#94a3b8' : '#475569',
+        textColor: isDark ? '#94a3b8' : '#64748b',
         gridColor: isDark ? 'rgba(51, 65, 85, 0.4)' : 'rgba(226, 232, 240, 0.8)',
+        isMonochrome: isMonochrome
       };
     }
 
     function renderCharts() {
-      const theme = getThemeStyles();
+      const theme = getThemeChartOptions();
+      const colorPalette = theme.isMonochrome
+        ? ['#ffffff', '#cccccc', '#999999', '#777777', '#555555', '#333333']
+        : ['#6366f1', '#8b5cf6', '#10b981', '#f59e0b', '#f43f5e', '#06b6d4'];
 
-      // 1. Timeline Chart (Revenue aggregated by month)
-      const monthlyData = {};
+      // ==========================================
+      // 1. PARETO 80/20 CHART
+      // ==========================================
+      const categoryRev = {};
+      let totalSales = 0;
       filteredDataset.forEach(d => {
-        const monthKey = d.date.substring(0, 7); // YYYY-MM
-        monthlyData[monthKey] = (monthlyData[monthKey] || 0) + d.price;
+        categoryRev[d.category] = (categoryRev[d.category] || 0) + d.revenue;
+        totalSales += d.revenue;
       });
 
-      const sortedMonths = Object.keys(monthlyData).sort();
-      const monthAmounts = sortedMonths.map(m => monthlyData[m]);
+      // Sort categories descending by revenue
+      const sortedCats = Object.keys(categoryRev).sort((a,b) => categoryRev[b] - categoryRev[a]);
+      const barRevenues = sortedCats.map(c => categoryRev[c]);
+      
+      let runningSum = 0;
+      const cumulativePercentages = barRevenues.map(rev => {
+        runningSum += rev;
+        return parseFloat(((runningSum / totalSales) * 100).toFixed(1));
+      });
 
-      if (charts.timeline) charts.timeline.destroy();
-      const ctxTimeline = document.getElementById('timelineChart').getContext('2d');
-      const gradLine = ctxTimeline.createLinearGradient(0, 0, 0, 240);
-      gradLine.addColorStop(0, 'rgba(99, 102, 241, 0.45)');
-      gradLine.addColorStop(1, 'rgba(99, 102, 241, 0.0)');
-
-      charts.timeline = new Chart(ctxTimeline, {
-        type: 'line',
+      if (charts.pareto) charts.pareto.destroy();
+      const ctxPareto = document.getElementById('paretoChart').getContext('2d');
+      charts.pareto = new Chart(ctxPareto, {
+        type: 'bar',
         data: {
-          labels: sortedMonths,
-          datasets: [{
-            label: 'Ventas ($)',
-            data: monthAmounts,
-            borderColor: '#6366f1',
-            backgroundColor: gradLine,
-            fill: true,
-            tension: 0.35,
-            borderWidth: 2.5,
-            pointRadius: sortedMonths.length > 20 ? 2 : 4,
-            pointBackgroundColor: '#818cf8'
-          }]
+          labels: sortedCats,
+          datasets: [
+            {
+              type: 'line',
+              label: currentLang === 'es' ? '% Acumulado' : 'Cumulative %',
+              data: cumulativePercentages,
+              borderColor: theme.isMonochrome ? '#ffffff' : '#f59e0b',
+              backgroundColor: theme.isMonochrome ? '#ffffff' : '#f59e0b',
+              borderWidth: 2.5,
+              yAxisID: 'y1',
+              pointRadius: 4
+            },
+            {
+              type: 'bar',
+              label: currentLang === 'es' ? 'Ventas ($)' : 'Revenue ($)',
+              data: barRevenues,
+              backgroundColor: theme.isMonochrome ? '#777777' : '#6366f1',
+              borderRadius: 6,
+              yAxisID: 'y'
+            }
+          ]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { display: false },
+            legend: { labels: { color: theme.textColor, font: { size: 11 } } },
             tooltip: {
               callbacks: {
-                label: (ctx) => ` Ingresos: ${formatCurrency(ctx.raw)}`
+                label: (ctx) => ctx.dataset.yAxisID === 'y1' 
+                  ? ` ${ctx.dataset.label}: ${ctx.raw}%` 
+                  : ` ${ctx.dataset.label}: ${formatCurrency(ctx.raw)}`
               }
             }
           },
           scales: {
             x: {
               grid: { display: false },
-              ticks: { color: theme.textColor, maxTicksLimit: 8, font: { size: 10 } }
+              ticks: { color: theme.textColor }
             },
             y: {
+              type: 'linear',
+              position: 'left',
               grid: { color: theme.gridColor },
               ticks: {
                 color: theme.textColor,
-                font: { size: 10 },
-                callback: (val) => `$${(val / 1000).toFixed(0)}k`
+                callback: (v) => `$${(v / 1000).toFixed(0)}k`
+              }
+            },
+            y1: {
+              type: 'linear',
+              position: 'right',
+              min: 0,
+              max: 100,
+              grid: { display: false },
+              ticks: {
+                color: theme.textColor,
+                callback: (v) => `${v}%`
               }
             }
           }
         }
       });
 
-      // 2. Category Donut Chart
-      const categoryTotals = {};
-      filteredDataset.forEach(d => {
-        categoryTotals[d.category] = (categoryTotals[d.category] || 0) + d.price;
+      // ==========================================
+      // 2. STATISTICAL PROCESS CONTROL (SPC / CEP)
+      // ==========================================
+      // Sample recent 30 batches for clear visual readability
+      const sampleSize = Math.min(35, filteredDataset.length);
+      const spcSlice = filteredDataset.slice(0, sampleSize);
+      
+      const spcDays = spcSlice.map(d => d.delivery);
+      const mean = spcDays.reduce((a,b) => a+b, 0) / sampleSize;
+      const variance = spcDays.reduce((a,b) => a + Math.pow(b - mean, 2), 0) / sampleSize;
+      const sigma = Math.sqrt(variance) || 0.8;
+
+      const UCL = parseFloat((mean + 3 * sigma).toFixed(2));
+      const LCL = parseFloat(Math.max(0, mean - 3 * sigma).toFixed(2));
+      const meanLine = parseFloat(mean.toFixed(2));
+
+      let outlierCount = 0;
+      const pointColors = spcDays.map(val => {
+        if (val > UCL || val < LCL) {
+          outlierCount++;
+          return '#f43f5e'; // Red outlier
+        }
+        return theme.isMonochrome ? '#ffffff' : '#6366f1';
       });
 
-      const catLabels = Object.keys(categoryTotals);
-      const catValues = catLabels.map(k => categoryTotals[k]);
-      const palette = ['#6366f1', '#a855f7', '#14b8a6', '#f59e0b', '#f43f5e', '#3b82f6', '#10b981'];
+      document.getElementById('spcOutlierCount').textContent = currentLang === 'es'
+        ? `${outlierCount} ${outlierCount === 1 ? 'anómalo' : 'anómalos'}`
+        : `${outlierCount} outliers`;
 
-      if (charts.category) charts.category.destroy();
-      const ctxCat = document.getElementById('categoryChart').getContext('2d');
-      charts.category = new Chart(ctxCat, {
-        type: 'doughnut',
+      if (charts.spc) charts.spc.destroy();
+      const ctxSpc = document.getElementById('spcChart').getContext('2d');
+      charts.spc = new Chart(ctxSpc, {
+        type: 'line',
         data: {
-          labels: catLabels,
-          datasets: [{
-            data: catValues,
-            backgroundColor: palette.slice(0, catLabels.length),
-            borderWidth: 2,
-            borderColor: '#0f172a',
-            hoverOffset: 6
-          }]
+          labels: spcSlice.map((_, idx) => `#${idx + 1}`),
+          datasets: [
+            {
+              label: currentLang === 'es' ? 'Días Lead Time' : 'Lead Time Days',
+              data: spcDays,
+              borderColor: theme.isMonochrome ? '#aaaaaa' : '#818cf8',
+              backgroundColor: theme.isMonochrome ? '#aaaaaa' : '#818cf8',
+              pointBackgroundColor: pointColors,
+              pointRadius: 4.5,
+              borderWidth: 2,
+              tension: 0.15
+            },
+            {
+              label: `UCL (+3σ: ${UCL}d)`,
+              data: new Array(sampleSize).fill(UCL),
+              borderColor: '#f43f5e',
+              borderDash: [5, 5],
+              borderWidth: 1.5,
+              pointRadius: 0
+            },
+            {
+              label: `Media X̄ (${meanLine}d)`,
+              data: new Array(sampleSize).fill(meanLine),
+              borderColor: '#10b981',
+              borderWidth: 1.5,
+              pointRadius: 0
+            },
+            {
+              label: `LCL (-3σ: ${LCL}d)`,
+              data: new Array(sampleSize).fill(LCL),
+              borderColor: '#f43f5e',
+              borderDash: [5, 5],
+              borderWidth: 1.5,
+              pointRadius: 0
+            }
+          ]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          cutout: '68%',
           plugins: {
-            legend: {
-              position: 'bottom',
-              labels: { color: theme.textColor, boxWidth: 10, padding: 8, font: { size: 10 } }
-            },
+            legend: { labels: { color: theme.textColor, font: { size: 10 } } },
             tooltip: {
               callbacks: {
-                label: (ctx) => ` ${ctx.label}: ${formatCurrency(ctx.raw)}`
+                label: (ctx) => ` ${ctx.dataset.label}: ${ctx.raw} ${currentLang === 'es' ? 'días' : 'days'}`
               }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { color: theme.textColor }
+            },
+            y: {
+              min: 0,
+              max: Math.max(10, UCL + 1),
+              grid: { color: theme.gridColor },
+              ticks: { color: theme.textColor }
             }
           }
         }
       });
 
-      // 3. Region Bar Chart
-      const regionTotals = {};
+      // ==========================================
+      // 3. TIMELINE MONTHLY CHART
+      // ==========================================
+      const monthlyData = {};
       filteredDataset.forEach(d => {
-        regionTotals[d.region] = (regionTotals[d.region] || 0) + d.price;
+        const m = d.date.substring(0, 7);
+        monthlyData[m] = (monthlyData[m] || 0) + d.revenue;
       });
 
-      const regLabels = Object.keys(regionTotals);
-      const regValues = regLabels.map(k => regionTotals[k]);
+      const months = Object.keys(monthlyData).sort();
+      const revenues = months.map(m => monthlyData[m]);
 
-      if (charts.region) charts.region.destroy();
-      const ctxRegion = document.getElementById('regionChart').getContext('2d');
-      charts.region = new Chart(ctxRegion, {
-        type: 'bar',
+      if (charts.timeline) charts.timeline.destroy();
+      const ctxTime = document.getElementById('timelineChart').getContext('2d');
+      const gradTime = ctxTime.createLinearGradient(0, 0, 0, 260);
+      gradTime.addColorStop(0, theme.isMonochrome ? 'rgba(255,255,255,0.35)' : 'rgba(99, 102, 241, 0.4)');
+      gradTime.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+      charts.timeline = new Chart(ctxTime, {
+        type: timelineChartType,
         data: {
-          labels: regLabels,
+          labels: months,
           datasets: [{
-            label: 'Ingresos',
-            data: regValues,
-            backgroundColor: '#10b981',
-            borderRadius: 8
+            label: currentLang === 'es' ? 'Ingresos ($)' : 'Revenue ($)',
+            data: revenues,
+            borderColor: theme.isMonochrome ? '#ffffff' : '#6366f1',
+            backgroundColor: timelineChartType === 'line' ? gradTime : (theme.isMonochrome ? '#ffffff' : '#6366f1'),
+            borderWidth: 2.5,
+            fill: true,
+            tension: 0.35,
+            borderRadius: timelineChartType === 'bar' ? 6 : 0,
+            pointRadius: months.length > 20 ? 2 : 4,
+            pointBackgroundColor: theme.isMonochrome ? '#ffffff' : '#6366f1'
           }]
         },
         options: {
@@ -955,12 +1842,14 @@
             }
           },
           scales: {
-            x: { grid: { display: false }, ticks: { color: theme.textColor, font: { size: 10 } } },
+            x: {
+              grid: { display: false },
+              ticks: { color: theme.textColor, maxTicksLimit: 7 }
+            },
             y: {
               grid: { color: theme.gridColor },
               ticks: {
                 color: theme.textColor,
-                font: { size: 10 },
                 callback: (val) => `$${(val / 1000).toFixed(0)}k`
               }
             }
@@ -968,14 +1857,103 @@
         }
       });
 
-      // 4. Payment Methods Pie
-      const payTotals = {};
-      filteredDataset.forEach(d => {
-        payTotals[d.payment] = (payTotals[d.payment] || 0) + 1;
+      // ==========================================
+      // 4. CATEGORY DOUGHNUT
+      // ==========================================
+      const catLabels = Object.keys(categoryRev);
+      const catValues = catLabels.map(c => categoryRev[c]);
+
+      if (charts.category) charts.category.destroy();
+      const ctxCat = document.getElementById('categoryChart').getContext('2d');
+      charts.category = new Chart(ctxCat, {
+        type: 'doughnut',
+        data: {
+          labels: catLabels,
+          datasets: [{
+            data: catValues,
+            backgroundColor: colorPalette.slice(0, catLabels.length),
+            borderWidth: 2,
+            borderColor: document.documentElement.classList.contains('dark') ? '#090d16' : '#ffffff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '65%',
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { color: theme.textColor, boxWidth: 10, padding: 10, font: { size: 10 } }
+            },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ` ${ctx.label}: ${formatCurrency(ctx.raw)}`
+              }
+            }
+          }
+        }
       });
 
-      const payLabels = Object.keys(payTotals);
-      const payValues = payLabels.map(k => payTotals[k]);
+      // ==========================================
+      // 5. REGIONAL BAR
+      // ==========================================
+      const regionRevenue = {};
+      filteredDataset.forEach(d => {
+        regionRevenue[d.region] = (regionRevenue[d.region] || 0) + d.revenue;
+      });
+
+      const regLabels = Object.keys(regionRevenue);
+      const regValues = regLabels.map(r => regionRevenue[r]);
+
+      if (charts.region) charts.region.destroy();
+      const ctxReg = document.getElementById('regionChart').getContext('2d');
+      charts.region = new Chart(ctxReg, {
+        type: 'bar',
+        data: {
+          labels: regLabels,
+          datasets: [{
+            data: regValues,
+            backgroundColor: theme.isMonochrome ? '#cccccc' : '#10b981',
+            borderRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ` ${formatCurrency(ctx.raw)}`
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { color: theme.textColor }
+            },
+            y: {
+              grid: { color: theme.gridColor },
+              ticks: {
+                color: theme.textColor,
+                callback: (val) => `$${(val / 1000).toFixed(0)}k`
+              }
+            }
+          }
+        }
+      });
+
+      // ==========================================
+      // 6. PAYMENT PIE
+      // ==========================================
+      const paymentCount = {};
+      filteredDataset.forEach(d => {
+        paymentCount[d.payment] = (paymentCount[d.payment] || 0) + 1;
+      });
+
+      const payLabels = Object.keys(paymentCount);
+      const payValues = payLabels.map(p => paymentCount[p]);
 
       if (charts.payment) charts.payment.destroy();
       const ctxPay = document.getElementById('paymentChart').getContext('2d');
@@ -985,9 +1963,9 @@
           labels: payLabels,
           datasets: [{
             data: payValues,
-            backgroundColor: ['#f59e0b', '#ec4899', '#06b6d4', '#8b5cf6', '#84cc16'],
+            backgroundColor: colorPalette.slice(0, payLabels.length),
             borderWidth: 2,
-            borderColor: '#0f172a'
+            borderColor: document.documentElement.classList.contains('dark') ? '#090d16' : '#ffffff'
           }]
         },
         options: {
@@ -1002,7 +1980,9 @@
         }
       });
 
-      // 5. Delivery vs Rating Bar
+      // ==========================================
+      // 7. DELIVERY VS RATING BAR
+      // ==========================================
       const deliveryBuckets = {};
       filteredDataset.forEach(d => {
         if (!deliveryBuckets[d.delivery]) deliveryBuckets[d.delivery] = { sum: 0, count: 0 };
@@ -1011,18 +1991,20 @@
       });
 
       const sortedDays = Object.keys(deliveryBuckets).map(Number).sort((a,b) => a - b);
-      const avgRatings = sortedDays.map(day => (deliveryBuckets[day].sum / deliveryBuckets[day].count).toFixed(2));
+      const ratingsAvg = sortedDays.map(day => {
+        const b = deliveryBuckets[day];
+        return parseFloat((b.sum / b.count).toFixed(2));
+      });
 
       if (charts.deliveryRating) charts.deliveryRating.destroy();
-      const ctxDelivery = document.getElementById('deliveryRatingChart').getContext('2d');
-      charts.deliveryRating = new Chart(ctxDelivery, {
+      const ctxDeliv = document.getElementById('deliveryRatingChart').getContext('2d');
+      charts.deliveryRating = new Chart(ctxDeliv, {
         type: 'bar',
         data: {
-          labels: sortedDays.map(d => `${d} días`),
+          labels: sortedDays.map(d => `${d} d`),
           datasets: [{
-            label: 'Calificación Promedio',
-            data: avgRatings,
-            backgroundColor: '#f43f5e',
+            data: ratingsAvg,
+            backgroundColor: theme.isMonochrome ? '#ffffff' : '#f43f5e',
             borderRadius: 6
           }]
         },
@@ -1038,12 +2020,15 @@
             }
           },
           scales: {
-            x: { grid: { display: false }, ticks: { color: theme.textColor, font: { size: 10 } } },
+            x: {
+              grid: { display: false },
+              ticks: { color: theme.textColor }
+            },
             y: {
               min: 0,
               max: 5,
               grid: { color: theme.gridColor },
-              ticks: { color: theme.textColor, font: { size: 10 } }
+              ticks: { color: theme.textColor }
             }
           }
         }
@@ -1051,13 +2036,14 @@
     }
 
     function renderTable() {
-      // Sort dataset
       const sorted = [...filteredDataset].sort((a, b) => {
         let valA = a[currentSort.column];
         let valB = b[currentSort.column];
 
         if (typeof valA === 'string') {
-          return currentSort.order === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+          return currentSort.order === 'asc' 
+            ? valA.localeCompare(valB) 
+            : valB.localeCompare(valA);
         }
         return currentSort.order === 'asc' ? valA - valB : valB - valA;
       });
@@ -1068,48 +2054,47 @@
 
       const startIndex = (currentPage - 1) * itemsPerPage;
       const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
-      const slice = sorted.slice(startIndex, endIndex);
+      const pageSlice = sorted.slice(startIndex, endIndex);
 
       const tbody = document.getElementById('tableBody');
       tbody.innerHTML = '';
 
-      if (slice.length === 0) {
+      if (pageSlice.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="10" class="p-8 text-center text-slate-500">
-              No se encontraron registros que coincidan con la búsqueda.
+            <td colspan="11" class="p-8 text-center text-slate-400">
+              ${currentLang === 'es' ? 'No se encontraron registros con los filtros seleccionados.' : 'No records found matching the active filters.'}
             </td>
           </tr>
         `;
       } else {
-        slice.forEach(row => {
+        pageSlice.forEach(row => {
           const tr = document.createElement('tr');
-          tr.className = 'hover:bg-slate-800/40 transition duration-150';
+          tr.className = 'hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 cursor-pointer transition select-none';
+          
           tr.innerHTML = `
-            <td class="p-3 font-mono font-medium text-indigo-400">${row.id}</td>
-            <td class="p-3 whitespace-nowrap text-slate-400 font-mono text-[11px]">${row.date}</td>
-            <td class="p-3 font-semibold text-slate-200">${row.product}</td>
+            <td class="p-3 font-mono font-bold text-indigo-600 dark:text-indigo-400">${row.id}</td>
+            <td class="p-3 whitespace-nowrap text-slate-500">${row.date}</td>
+            <td class="p-3 font-mono text-slate-700 dark:text-slate-300">${row.customer}</td>
             <td class="p-3">
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-800 text-slate-300 border border-slate-700">
+              <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                 ${row.category}
               </span>
             </td>
-            <td class="p-3 text-slate-300 font-medium">${row.region}</td>
-            <td class="p-3 text-slate-400">${row.payment}</td>
-            <td class="p-3 text-right font-medium text-slate-200">${row.qty}</td>
-            <td class="p-3 text-right font-bold text-white">$${row.price.toFixed(2)}</td>
-            <td class="p-3 text-center">
-              <span class="inline-flex items-center gap-1 font-bold text-amber-400">
-                ${row.rating} ★
-              </span>
-            </td>
-            <td class="p-3 text-center text-slate-400">${row.delivery} d</td>
+            <td class="p-3 text-slate-600 dark:text-slate-400">${row.region}</td>
+            <td class="p-3 text-slate-600 dark:text-slate-400">${row.payment}</td>
+            <td class="p-3 text-right font-medium">${row.qty}</td>
+            <td class="p-3 text-right font-medium text-rose-500">${(row.discount * 100).toFixed(0)}%</td>
+            <td class="p-3 text-right font-bold text-slate-900 dark:text-white">$${row.revenue.toFixed(2)}</td>
+            <td class="p-3 text-center font-bold text-amber-500">${row.rating} ★</td>
+            <td class="p-3 text-center text-slate-500">${row.delivery} d</td>
           `;
+
+          tr.addEventListener('click', () => openOrderDetailModal(row));
           tbody.appendChild(tr);
         });
       }
 
-      // Update Pagination Indicators
       document.getElementById('paginationStart').textContent = totalItems === 0 ? 0 : startIndex + 1;
       document.getElementById('paginationEnd').textContent = endIndex;
       document.getElementById('paginationTotal').textContent = totalItems.toLocaleString();
@@ -1118,55 +2103,65 @@
       document.getElementById('prevPageBtn').disabled = currentPage <= 1;
       document.getElementById('nextPageBtn').disabled = currentPage >= totalPages;
 
-      // Update Sort Icons
       document.querySelectorAll('th[data-sort]').forEach(th => {
         const col = th.getAttribute('data-sort');
-        const iconSpan = th.querySelector('.sort-icon');
+        const indicator = th.querySelector('.sort-indicator');
         if (col === currentSort.column) {
-          iconSpan.textContent = currentSort.order === 'asc' ? ' ↑' : ' ↓';
-          iconSpan.className = 'sort-icon text-indigo-400 font-bold';
+          indicator.textContent = currentSort.order === 'asc' ? ' ↑' : ' ↓';
+          indicator.className = 'sort-indicator text-indigo-500 font-bold';
         } else {
-          iconSpan.textContent = '';
+          indicator.textContent = '';
         }
       });
     }
 
-    function setupEventListeners() {
-      // Search with debounce
-      let debounce;
+    function openOrderDetailModal(row) {
+      document.getElementById('modalOrderId').textContent = row.id;
+      document.getElementById('modalOrderDate').textContent = `${currentLang === 'es' ? 'Registrado el' : 'Logged on'}: ${row.date}`;
+      document.getElementById('modalCustomerId').textContent = row.customer;
+      document.getElementById('modalCategory').textContent = row.category;
+      document.getElementById('modalRegion').textContent = row.region;
+      document.getElementById('modalPayment').textContent = row.payment;
+      document.getElementById('modalQtyPrice').textContent = `${row.qty} ${currentLang === 'es' ? 'unidades' : 'units'} @ $${row.unitPrice.toFixed(2)}`;
+      document.getElementById('modalDiscount').textContent = `${(row.discount * 100).toFixed(0)}% ${currentLang === 'es' ? 'aplicado' : 'applied'}`;
+      document.getElementById('modalDelivery').textContent = `${row.delivery} ${currentLang === 'es' ? 'días de tránsito' : 'lead time days'}`;
+      document.getElementById('modalRating').textContent = `${row.rating} ★`;
+      document.getElementById('modalRevenue').textContent = `$${row.revenue.toFixed(2)}`;
+
+      document.getElementById('modalOverlay').classList.remove('hidden');
+    }
+
+    function initializeEvents() {
+      // Language buttons
+      document.getElementById('langEsBtn').addEventListener('click', () => setLanguage('es'));
+      document.getElementById('langEnBtn').addEventListener('click', () => setLanguage('en'));
+
+      // Search & select filters
+      let searchTimeout;
       document.getElementById('searchInput').addEventListener('input', () => {
-        clearTimeout(debounce);
-        debounce = setTimeout(applyFilters, 250);
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(applyFilters, 250);
       });
 
-      // Filter select triggers
       document.getElementById('categorySelect').addEventListener('change', applyFilters);
       document.getElementById('paymentSelect').addEventListener('change', applyFilters);
       document.getElementById('startDateInput').addEventListener('change', applyFilters);
       document.getElementById('endDateInput').addEventListener('change', applyFilters);
+      document.getElementById('resetFiltersBtn').addEventListener('click', resetAllFilters);
 
-      // Region Filter Buttons
-      document.querySelectorAll('.region-pill').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          selectedRegion = e.currentTarget.dataset.region;
-          document.querySelectorAll('.region-pill').forEach(b => {
-            b.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
-            b.classList.add('bg-slate-800', 'text-slate-300', 'border-slate-700');
-          });
-          e.currentTarget.classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
-          e.currentTarget.classList.remove('bg-slate-800', 'text-slate-300', 'border-slate-700');
-          applyFilters();
-        });
+      // Recalculate EOQ
+      document.getElementById('recalcEoqBtn').addEventListener('click', () => {
+        calculateEOQ();
+        showToast(currentLang === 'es' ? 'Modelo EOQ y ROP recalculado.' : 'EOQ & ROP model updated.');
       });
 
-      // Page size
+      // Pagination Size & Controls
       document.getElementById('pageSizeSelect').addEventListener('change', (e) => {
         itemsPerPage = parseInt(e.target.value, 10);
         currentPage = 1;
         renderTable();
       });
 
-      // Pagination
       document.getElementById('prevPageBtn').addEventListener('click', () => {
         if (currentPage > 1) {
           currentPage--;
@@ -1178,7 +2173,7 @@
         renderTable();
       });
 
-      // Column Sorting
+      // Sorting
       document.querySelectorAll('th[data-sort]').forEach(th => {
         th.addEventListener('click', () => {
           const col = th.getAttribute('data-sort');
@@ -1192,133 +2187,123 @@
         });
       });
 
-      // Reset Button
-      document.getElementById('resetFiltersBtn').addEventListener('click', () => {
-        document.getElementById('searchInput').value = '';
-        document.getElementById('categorySelect').value = 'ALL';
-        document.getElementById('paymentSelect').value = 'ALL';
-        selectedRegion = 'ALL';
+      // Themes Switcher
+      document.getElementById('themeDarkBtn').addEventListener('click', () => setTheme('dark'));
+      document.getElementById('themeLightBtn').addEventListener('click', () => setTheme('light'));
+      document.getElementById('themeMonoBtn').addEventListener('click', () => setTheme('monochrome'));
 
-        const dates = rawDataset.map(d => d.date).filter(Boolean).sort();
-        if (dates.length > 0) {
-          document.getElementById('startDateInput').value = dates[0];
-          document.getElementById('endDateInput').value = dates[dates.length - 1];
-        }
+      // Easy Mode
+      document.getElementById('easyModeToggleBtn').addEventListener('click', toggleEasyMode);
+      document.getElementById('easyModeBtnMobile').addEventListener('click', toggleEasyMode);
 
-        document.querySelectorAll('.region-pill').forEach(b => {
-          if (b.dataset.region === 'ALL') {
-            b.classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
-            b.classList.remove('bg-slate-800', 'text-slate-300');
-          } else {
-            b.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
-            b.classList.add('bg-slate-800', 'text-slate-300');
-          }
-        });
-
-        applyFilters();
-        showToast('Filtros restablecidos.');
+      // Chart Mode Toggle (Line vs Bar)
+      document.getElementById('toggleLineChartBtn').addEventListener('click', (e) => {
+        timelineChartType = 'line';
+        e.target.className = 'px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 shadow-sm font-semibold text-indigo-600 dark:text-indigo-400';
+        document.getElementById('toggleBarChartBtn').className = 'px-2.5 py-1 rounded-lg text-slate-600 dark:text-slate-400 font-medium hover:text-slate-900';
+        renderCharts();
+      });
+      document.getElementById('toggleBarChartBtn').addEventListener('click', (e) => {
+        timelineChartType = 'bar';
+        e.target.className = 'px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 shadow-sm font-semibold text-indigo-600 dark:text-indigo-400';
+        document.getElementById('toggleLineChartBtn').className = 'px-2.5 py-1 rounded-lg text-slate-600 dark:text-slate-400 font-medium hover:text-slate-900';
+        renderCharts();
       });
 
-      // File Upload Buttons
+      // Export CSV
+      document.getElementById('exportCsvBtn').addEventListener('click', () => {
+        if (!filteredDataset.length) return showToast(currentLang === 'es' ? 'No hay datos filtrados para exportar.' : 'No data to export.', true);
+        const csv = Papa.unparse(filteredDataset);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `industrial_sales_analytics_${new Date().toISOString().slice(0,10)}.csv`;
+        link.click();
+        showToast(currentLang === 'es' ? 'Archivo CSV exportado exitosamente.' : 'CSV exported successfully.');
+      });
+
+      // Print Report
+      document.getElementById('printReportBtn').addEventListener('click', () => window.print());
+
+      // File input
       const fileInput = document.getElementById('csvFileInput');
-      const openFilePicker = () => fileInput.click();
-
-      document.getElementById('uploadCsvBtn').addEventListener('click', openFilePicker);
-      document.getElementById('selectFileBannerBtn').addEventListener('click', openFilePicker);
-      document.getElementById('dropZoneContainer').addEventListener('click', (e) => {
-        if (e.target.id !== 'selectFileBannerBtn') openFilePicker();
-      });
-
+      document.getElementById('uploadCsvBtn').addEventListener('click', () => fileInput.click());
       fileInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        parseSelectedFile(file);
+        Papa.parse(file, {
+          header: true,
+          dynamicTyping: true,
+          skipEmptyLines: true,
+          complete: function(res) {
+            if (res.data && res.data.length > 0) {
+              normalizeAndStoreData(res.data, file.name);
+              showToast(`${currentLang === 'es' ? 'Archivo cargado' : 'File loaded'}: "${file.name}" (${res.data.length} filas).`);
+            } else {
+              showToast(currentLang === 'es' ? 'Error: CSV vacío.' : 'Error: Empty CSV.', true);
+            }
+          }
+        });
       });
 
-      // Drag and Drop files onto window
+      // Drag and drop
       window.addEventListener('dragover', (e) => e.preventDefault());
       window.addEventListener('drop', (e) => {
         e.preventDefault();
         if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-          parseSelectedFile(e.dataTransfer.files[0]);
-        }
-      });
-
-      // Export Filtered CSV
-      document.getElementById('exportFilteredBtn').addEventListener('click', () => {
-        if (!filteredDataset.length) {
-          showToast('No hay datos filtrados para exportar.', true);
-          return;
-        }
-        const csvStr = Papa.unparse(filteredDataset);
-        const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `sales_export_${new Date().toISOString().slice(0,10)}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        showToast('Archivo CSV exportado exitosamente.');
-      });
-
-      // Theme toggle buttons
-      const toggleTheme = () => {
-        const isDark = document.documentElement.classList.toggle('dark');
-        renderCharts();
-      };
-      document.getElementById('themeToggleBtnDesktop').addEventListener('click', toggleTheme);
-      document.getElementById('themeToggleBtnMobile').addEventListener('click', toggleTheme);
-    }
-
-    function parseSelectedFile(file) {
-      Papa.parse(file, {
-        header: true,
-        dynamicTyping: true,
-        skipEmptyLines: true,
-        complete: function(results) {
-          if (results.data && results.data.length > 0) {
-            const parsed = normalizeRows(results.data);
-            if (parsed.length > 0) {
-              rawDataset = parsed;
-              document.getElementById('activeFileName').textContent = file.name;
-              populateFilterOptions();
-              applyFilters();
-              showToast(`Archivo "${file.name}" cargado (${parsed.length.toLocaleString()} filas).`);
-            } else {
-              showToast('No se encontraron registros numéricos válidos en el archivo.', true);
-            }
+          const file = e.dataTransfer.files[0];
+          if (file.name.endsWith('.csv')) {
+            Papa.parse(file, {
+              header: true,
+              dynamicTyping: true,
+              skipEmptyLines: true,
+              complete: function(res) {
+                normalizeAndStoreData(res.data, file.name);
+                showToast(`${currentLang === 'es' ? 'Archivo arrastrado' : 'File dropped'}: "${file.name}".`);
+              }
+            });
           }
-        },
-        error: function(err) {
-          showToast('Error al leer el archivo CSV: ' + err.message, true);
+        }
+      });
+
+      // Modal Close
+      document.getElementById('closeModalBtn').addEventListener('click', () => {
+        document.getElementById('modalOverlay').classList.add('hidden');
+      });
+      document.getElementById('modalOverlay').addEventListener('click', (e) => {
+        if (e.target.id === 'modalOverlay') {
+          document.getElementById('modalOverlay').classList.add('hidden');
         }
       });
     }
 
     function showToast(message, isError = false) {
       const toast = document.getElementById('statusToast');
-      const msg = document.getElementById('toastMessage');
-      msg.textContent = message;
+      const text = document.getElementById('toastMessage');
+      text.textContent = message;
 
       if (isError) {
-        toast.className = 'transition-all duration-300 flex items-center justify-between p-3.5 rounded-xl border bg-rose-950/60 text-rose-300 border-rose-800 shadow text-xs';
+        toast.firstElementChild.className = 'flex items-center justify-between p-3.5 rounded-2xl border bg-rose-50 text-rose-900 border-rose-200 dark:bg-rose-950/60 dark:text-rose-200 dark:border-rose-800 shadow-sm text-xs font-semibold';
       } else {
-        toast.className = 'transition-all duration-300 flex items-center justify-between p-3.5 rounded-xl border bg-emerald-950/60 text-emerald-300 border-emerald-800 shadow text-xs';
+        toast.firstElementChild.className = 'flex items-center justify-between p-3.5 rounded-2xl border bg-emerald-50 text-emerald-900 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-200 dark:border-emerald-800 shadow-sm text-xs font-semibold';
       }
 
       toast.classList.remove('hidden');
-      setTimeout(() => {
-        toast.classList.add('hidden');
-      }, 4500);
+      setTimeout(() => toast.classList.add('hidden'), 4000);
     }
 
-    // App Startup
+    // App Initialization
     window.addEventListener('DOMContentLoaded', () => {
       lucide.createIcons();
-      setupEventListeners();
-      loadInitialData();
+      const savedTheme = localStorage.getItem('omni_theme') || 'dark';
+      setTheme(savedTheme);
+      setupShortcuts();
+      initializeEvents();
+      
+      const savedLang = localStorage.getItem('omni_lang') || 'es';
+      setLanguage(savedLang);
+      
+      loadDataset();
     });
   </script>
 </body>
